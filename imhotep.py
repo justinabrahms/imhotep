@@ -3,6 +3,10 @@ import logging
 import os
 from tempfile import mkdtemp
 import envoy
+import requests
+from requests.auth import HTTPBasicAuth
+import json
+
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
@@ -128,6 +132,12 @@ def post_comments(repo, results):
         log.debug("Would have pushed: %s", p)
         # auth to github
         # post commit comment for file in results.
+        resp = requests.post(
+            'https://api.github.com/repos/%s/commits/%s/comments' % (repo.name,
+                                                                     commit),
+            data=json.dumps(p),
+            auth=HTTPBasicAuth(credentials['user'],
+                               credentials['password']))
 
 
 if __name__ == '__main__':
@@ -145,6 +155,14 @@ if __name__ == '__main__':
     parser.add_argument(
         '--debug', action='store_true',
         help="Will dump debugging output and won't clean up after itself.")
+    parser.add_argument(
+        '--github-username',
+        required=True,
+        help='Github user to post comments as.')
+    parser.add_argument(
+        '--github-password',
+        required=True,
+        help='Github password for the above user.')
     # parse out repo name
     args = parser.parse_args()
     repo_name = args.repo_name
@@ -153,11 +171,16 @@ if __name__ == '__main__':
     if args.debug:
         log.setLevel(logging.DEBUG)
 
+    credentials = {
+        'user': args.github_username,
+        'password': args.github_password
+    }
+
     manager = RepoManager(cleanup=args.debug)
     try:
         repo = manager.clone_repo(repo_name)
         apply_commit(repo, commit)
         results = run_analysis(repo, filenames=set(args.filenames or []))
-        post_comments(repo, results)
+        post_comments(repo, credentials, commit, results)
     finally:
         manager.cleanup()
