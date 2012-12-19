@@ -117,27 +117,41 @@ def run_analysis(repo, filenames=set()):
     return results
 
 
-def post_comments(repo, results):
+class ResultSet(object):
+    def __init__(self):
+        self.results = []
+
+    def add(self, filename, line, result):
+        self.results.append({'filename': filename,
+                             'line': int(line),
+                             'result': result})
+
+    def sort(self):
+        self.results.sort(key=lambda x: (x['filename'], x['line']))
+
+    def github_print(self):
+        return '\n'.join("%s:%s - %s" % (x['filename'], x['line'], x['result'])
+                         for x in self.results)
+
+def post_comments(repo, credentials, commit, results):
     payloads = []
+    rs = ResultSet()
     for filename, line_results in results.items():
         for line, results in line_results.items():
             for result in results:
-                payloads.append({
-                    'body': result,
-                    'line': line,
-                    'path': filename
-                })
+                rs.add(filename, line, result)
 
-    for p in payloads:
-        log.debug("Would have pushed: %s", p)
-        # auth to github
-        # post commit comment for file in results.
-        resp = requests.post(
-            'https://api.github.com/repos/%s/commits/%s/comments' % (repo.name,
-                                                                     commit),
-            data=json.dumps(p),
-            auth=HTTPBasicAuth(credentials['user'],
-                               credentials['password']))
+    rs.sort()
+    body_txt = "Found the following errors:\n\n%s" % rs.github_print()
+
+    # auth to github
+    # post commit comment for file in results.
+    resp = requests.post(
+        'https://api.github.com/repos/%s/commits/%s/comments' % (repo.name,
+                                                                 commit),
+        data=json.dumps({'body': body_txt}),
+        auth=HTTPBasicAuth(credentials['user'],
+                           credentials['password']))
 
 
 if __name__ == '__main__':
