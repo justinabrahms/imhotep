@@ -8,6 +8,9 @@ import json
 import subprocess
 import re
 
+from reporters import PrintingReporter, CommitReporter, PRReporter
+from tools import PyLint, JSHint
+
 from github_parse import DiffContextParser
 
 
@@ -15,13 +18,13 @@ logging.basicConfig()
 log = logging.getLogger(__name__)
 
 
-class GithubRequester(object)
+class GithubRequester(object):
     def __init__(self, username, password):
         self.username = username
         self.password = password
 
     def get(self, url):
-        return requests.post(url, auth=HTTPBasicAuth(user, password))
+        return requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
 
     def post(self, url, payload):
         return requests.post(
@@ -29,75 +32,8 @@ class GithubRequester(object)
             auth=HTTPBasicAuth(user, password))
 
 
-class Tool(object):
-    def invoke(self, dirname, filenames=set()):
-        """
-        Returns results in the format of:
-
-        {'filename': {
-          'line_number': {
-            'error1',
-            'error2'
-            }
-          }
-        }
-
-        """
-        raise NotImplementedError
-
-
 def run(cmd):
     return subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
-
-
-class JSHint(Tool):
-    response_format = re.compile(r'^(?P<filename>.*): line (?P<line_number>\d+), col \d+, (?P<message>.*)$')
-    jshintrc_filename = '.jshintrc'
-
-    def invoke(self, dirname, filenames=set()):
-        to_return = defaultdict(lambda: defaultdict(list))
-        cmd = 'find %s -name "*.js" | ' \
-          " xargs jshint " % dirname
-        jshint_file = os.path.join(dirname, self.jshintrc_filename)
-        if os.path.exists(jshint_file):
-            cmd += "--config=%s" % jshint_file
-        result = run(cmd)
-        # format:
-        # cssauron/index.js: line 87, col 12, Missing semicolon.
-        for l in result.split("\n"):
-            line = l[len(dirname)+1:] # +1 for trailing slash to make relative dir
-            match = self.response_format.search(line)
-            if match is not None:
-                to_return[match.group('filename')][match.group('line_number')].append(match.group('message'))
-        return to_return
-
-
-class PyLint(Tool):
-    pylintrc_filename = '.pylintrc'
-
-    def invoke(self, dirname, filenames=set()):
-        to_return = defaultdict(lambda: defaultdict(list))
-        log.debug("Running pylint on %s", dirname)
-        cmd = 'find %s -name "*.py" | ' \
-          'xargs pylint --output-format=parseable -rn'
-
-        if os.path.exists(os.path.join(dirname, self.pylintrc_filename)):
-            cmd += " --rcfile=%s" % os.path.join(
-                dirname, self.pylintrc_filename)
-
-        result = run(cmd % dirname)
-        # splitting based on newline + dirname and trailing slash will make
-        # beginning of line until first colon the relative filename. It also has
-        # the nice side effect of allowing us multi-line output from the tool
-        # without things breaking.
-        for line in result.split("\n%s/" % dirname):
-            if len(line) == 0:
-                continue
-            filename, line_num, error = line.split(':', 2)
-            if len(filenames) != 0 and filename not in filenames:
-                continue
-            to_return[filename][line_num].append(error)
-        return to_return
 
 
 class RepoManager(object):
@@ -151,79 +87,13 @@ class Repository(object):
         return self.name
 
     def get_tools(self):
-        return [PyLint(), JSHint()]
+        return [PyLint(run), JSHint(run)]
 
 
 class AuthenticatedRepository(Repository):
     @property
     def download_location(self):
         return "git@github.com:%s.git" % self.name
-
-
-class Reporter(object):
-    def report_line(self, repo_name, commit, file_name, line_number, position, message):
-        raise NotImplementedError()
-
-
-class PrintingReporter(Reporter):
-    def report_line(self, repo_name, commit, file_name, line_number, position, message):
-        print "Would have posted the following: \n" \
-          "commit: %(commit)s\n" \
-          "position: %(position)s\n" \
-          "message: %(message)s\n" \
-          "file: %(filename)s\n" \
-          "repo: %(repo)s\n" % {
-              'repo': repo.name,
-              'commit': commit,
-              'position': posMap[x],
-              'message': violations['%s' % x],
-              'filename': entry.result_filename
-          }
-
-
-class CommitReporter(Reporter):
-    def __init__(self, requester):
-        self.requester = requester
-
-    def report_line(self, repo_name, commit, file_name, line_number, position, message):
-        self.commit_post(
-            repo.name, commit, posMap[x], violations['%s' % x],
-            entry.result_filename)
-
-    def commit_post(reponame, commit, position, txt, path):
-        payload = {
-            'body': txt,
-            'sha': commit,
-            'path': path,
-            'position': position,
-            'line': None,
-        }
-        self.requester.post(
-            'https://api.github.com/repos/%s/commits/%s/comments' % (reponame, commit),
-            payload)
-
-
-class PRReporter(Reporter):
-    def __init__(self, requester, pr_number):
-        self.requester = requester
-        self.pr_number = pr_number
-
-    def report_line(self, repo_name, commit, file_name, line_number, position, message):
-        self.pr_post(
-            repo.name, commit, posMap[x], violations['%s' % x],
-            entry.result_filename)
-
-    def pr_post(reponame, commit, position, txt, path):
-        payload = {
-            'body': txt,
-            'commit_id': commit, # sha
-            'path': path, # relative file path
-            'position': position, # line index into the diff
-        }
-
-        return self.requester.post(
-            'https://api.github.com/repos/%s/pulls/%s/comments' % (reponame, self.pr_number),
-            payload)
 
 
 def apply_commit(repo, commit, compare_point="HEAD^"):
@@ -246,6 +116,7 @@ def get_sha_for_pr(requester, reponame, number):
     "Returns tuple of (branch_point, pr_head)"
     resp = requester.get('https://api.github.com/repos/%s/pulls/%s' % (reponame, number))
     return resp.json['base']['sha'], resp.json['head']['sha']
+
 
 if __name__ == '__main__':
     import argparse
@@ -284,6 +155,9 @@ if __name__ == '__main__':
         '--authenticated',
         action="store_true",
         help="Indicates the repository requires authentication")
+    parser.add_argument(
+        '--pr-number',
+        help="Number of the pull request to comment on")
 
     # parse out repo name
     args = parser.parse_args()
@@ -294,10 +168,9 @@ if __name__ == '__main__':
     gh_req = GithubRequester(args.github_username, args.github_password)
     pr_num = args.pr_number
 
-    if pr_num != 0:
-        origin_commit, commit = get_sha_for_pr(gh_req, repo_name, args.pr_num)
+    if pr_num != '':
+        origin_commit, commit = get_sha_for_pr(gh_req, repo_name, pr_num)
         reporter = PRReporter(gh_req, pr_num)
-
     elif commit is not None:
         reporter = CommitReporter(gh_req)
 
@@ -309,6 +182,7 @@ if __name__ == '__main__':
 
     manager = RepoManager(ignore_cleanup=args.debug,
                           authenticated=args.authenticated)
+    
     try:
         repo = manager.clone_repo(repo_name)
         diff = apply_commit(repo, commit, origin_commit)
