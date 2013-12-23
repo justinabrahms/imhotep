@@ -14,6 +14,16 @@ from github_parse import DiffContextParser
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
+class GithubRequester(object)
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+    def query(self, url, payload):
+        return requests.post(
+            url, data=json.dumps(payload),
+            auth=HTTPBasicAuth(user, password))
+
 
 class Tool(object):
     def invoke(self, dirname, filenames=set()):
@@ -158,7 +168,7 @@ def run_analysis(repo, filenames=set()):
     return results
 
 
-def commit_post(reponame, user, password, commit, position, txt, path):
+def commit_post(reponame, requester, commit, position, txt, path):
     payload = {
         'body': txt,
         'sha': commit,
@@ -167,23 +177,23 @@ def commit_post(reponame, user, password, commit, position, txt, path):
         'line': None,
     }
     print "Payload: %s" % payload
-    return requests.post(
+    requester(
         'https://api.github.com/repos/%s/commits/%s/comments' % (reponame, commit),
-        data=json.dumps(payload),
-        auth=HTTPBasicAuth(user, password))
+        payload
+        )
 
 
-def pr_post(reponame, user, passw, num, position, txt):
-    resp = requests.post(
+def pr_post(reponame, user, password, commit, num, position, txt, path):
+    payload = {
+        'body': txt,
+        'commit_id': commit, # sha
+        'path': path, # relative file path
+        'position': position, # line index into the diff
+    }
+
+    return requester(
         'https://api.github.com/repos/%s/pulls/%s/comments' % (reponame, num),
-        data=json.dumps({
-            'body': body_txt,
-            'commit_id': '', # sha
-            'path': '', # relative file path
-            'position': 0, # line index into the diff
-        }),
-        auth=HTTPBasicAuth(user,
-                           passw))
+        payload)
 
 
 if __name__ == '__main__':
@@ -234,10 +244,7 @@ if __name__ == '__main__':
     if args.debug:
         log.setLevel(logging.DEBUG)
 
-    credentials = {
-        'user': args.github_username,
-        'password': args.github_password
-    }
+    gh_req = GithubRequester(args.github_username, args.github_password)
 
     manager = RepoManager(ignore_cleanup=args.debug, authenticated=args.authenticated)
     try:
@@ -276,7 +283,7 @@ if __name__ == '__main__':
                           'filename': entry.result_filename
                       }
                 else:
-                    commit_post(repo.name, credentials['user'], credentials['password'],
+                    commit_post(repo.name, gh_req,
                                 commit, posMap[x], violations['%s' % x], entry.result_filename)
     finally:
         manager.cleanup()
