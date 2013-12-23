@@ -34,7 +34,6 @@ class Tool(object):
 def run(cmd):
     return subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
 
-
 class JSHint(Tool):
     response_format = re.compile(r'^(?P<filename>.*): line (?P<line_number>\d+), col \d+, (?P<message>.*)$')
     jshintrc_filename = '.jshintrc'
@@ -90,8 +89,14 @@ class RepoManager(object):
     """
     to_cleanup = {}
 
-    def __init__(self, ignore_cleanup=False):
+    def __init__(self, ignore_cleanup=False, authenticated=False):
         self.should_cleanup = not ignore_cleanup
+        self.authenticated = authenticated
+
+    def get_repo_class(self):
+        if self.authenticated:
+            return AuthenticatedRepository
+        return Repository
 
     # TODO(justinabrahms): Implement caching of repos.
     def clone_repo(self, repo_name):
@@ -100,7 +105,8 @@ class RepoManager(object):
         dirname = mkdtemp(suffix=dired_repo_name)
 
         self.to_cleanup[repo_name] = dirname
-        repo = Repository(repo_name, dirname)
+        klass = self.get_repo_class()
+        repo = klass(repo_name, dirname)
         log.debug("Cloning %s to %s", repo.download_location, dirname)
         run("git clone %s %s" % (repo.download_location, dirname))
         return repo
@@ -130,6 +136,10 @@ class Repository(object):
     def get_tools(self):
         return [PyLint(), JSHint()]
 
+class AuthenticatedRepository(Repository):
+    @property
+    def download_location(self):
+        return "git@github.com:%s.git" % self.name
 
 
 def apply_commit(repo, commit, compare_point="HEAD^"):
@@ -209,6 +219,10 @@ if __name__ == '__main__':
         '--no-post',
         action="store_true",
         help="[DEBUG] will print out comments rather than posting to github.")
+    parser.add_argument(
+        '--authenticated',
+        action="store_true",
+        help="Indicates the repository requires authentication")
 
     # parse out repo name
     args = parser.parse_args()
@@ -225,7 +239,7 @@ if __name__ == '__main__':
         'password': args.github_password
     }
 
-    manager = RepoManager(ignore_cleanup=args.debug)
+    manager = RepoManager(ignore_cleanup=args.debug, authenticated=args.authenticated)
     try:
         repo = manager.clone_repo(repo_name)
         diff = apply_commit(repo, commit, origin_commit)
