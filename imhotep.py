@@ -191,9 +191,6 @@ if __name__ == '__main__':
         dcp = DiffContextParser(diff)
         z = dcp.parse()
 
-        # TODO(justinabrahms): Should add a flag which swaps out the endpoint
-        # for the pull request endpoint and auto-determines the diff-point (from
-        # the branch point of the PR)
         for entry in z:
             added_lines = [l.number for l in entry.added_lines]
             posMap = {}
