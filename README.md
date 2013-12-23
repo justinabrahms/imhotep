@@ -1,3 +1,4 @@
+![Imhotep](https://f.cloud.github.com/assets/37303/1799404/d09d070a-6b99-11e3-9b31-f7eb9c5a2245.png)
 # Imhotep, the peaceful builder.
 
 ## What is it?
