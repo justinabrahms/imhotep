@@ -14,12 +14,16 @@ from github_parse import DiffContextParser
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
+
 class GithubRequester(object)
     def __init__(self, username, password):
         self.username = username
         self.password = password
 
-    def query(self, url, payload):
+    def get(self, url):
+        return requests.post(url, auth=HTTPBasicAuth(user, password))
+
+    def post(self, url, payload):
         return requests.post(
             url, data=json.dumps(payload),
             auth=HTTPBasicAuth(user, password))
@@ -41,8 +45,10 @@ class Tool(object):
         """
         raise NotImplementedError
 
+
 def run(cmd):
     return subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
+
 
 class JSHint(Tool):
     response_format = re.compile(r'^(?P<filename>.*): line (?P<line_number>\d+), col \d+, (?P<message>.*)$')
@@ -64,6 +70,7 @@ class JSHint(Tool):
             if match is not None:
                 to_return[match.group('filename')][match.group('line_number')].append(match.group('message'))
         return to_return
+
 
 class PyLint(Tool):
     pylintrc_filename = '.pylintrc'
@@ -146,10 +153,77 @@ class Repository(object):
     def get_tools(self):
         return [PyLint(), JSHint()]
 
+
 class AuthenticatedRepository(Repository):
     @property
     def download_location(self):
         return "git@github.com:%s.git" % self.name
+
+
+class Reporter(object):
+    def report_line(self, repo_name, commit, file_name, line_number, position, message):
+        raise NotImplementedError()
+
+
+class PrintingReporter(Reporter):
+    def report_line(self, repo_name, commit, file_name, line_number, position, message):
+        print "Would have posted the following: \n" \
+          "commit: %(commit)s\n" \
+          "position: %(position)s\n" \
+          "message: %(message)s\n" \
+          "file: %(filename)s\n" \
+          "repo: %(repo)s\n" % {
+              'repo': repo.name,
+              'commit': commit,
+              'position': posMap[x],
+              'message': violations['%s' % x],
+              'filename': entry.result_filename
+          }
+
+
+class CommitReporter(Reporter):
+    def __init__(self, requester):
+        self.requester = requester
+
+    def report_line(self, repo_name, commit, file_name, line_number, position, message):
+        self.commit_post(
+            repo.name, commit, posMap[x], violations['%s' % x],
+            entry.result_filename)
+
+    def commit_post(reponame, commit, position, txt, path):
+        payload = {
+            'body': txt,
+            'sha': commit,
+            'path': path,
+            'position': position,
+            'line': None,
+        }
+        self.requester.post(
+            'https://api.github.com/repos/%s/commits/%s/comments' % (reponame, commit),
+            payload)
+
+
+class PRReporter(Reporter):
+    def __init__(self, requester, pr_number):
+        self.requester = requester
+        self.pr_number = pr_number
+
+    def report_line(self, repo_name, commit, file_name, line_number, position, message):
+        self.pr_post(
+            repo.name, commit, posMap[x], violations['%s' % x],
+            entry.result_filename)
+
+    def pr_post(reponame, commit, position, txt, path):
+        payload = {
+            'body': txt,
+            'commit_id': commit, # sha
+            'path': path, # relative file path
+            'position': position, # line index into the diff
+        }
+
+        return self.requester.post(
+            'https://api.github.com/repos/%s/pulls/%s/comments' % (reponame, self.pr_number),
+            payload)
 
 
 def apply_commit(repo, commit, compare_point="HEAD^"):
@@ -168,33 +242,10 @@ def run_analysis(repo, filenames=set()):
     return results
 
 
-def commit_post(reponame, requester, commit, position, txt, path):
-    payload = {
-        'body': txt,
-        'sha': commit,
-        'path': path,
-        'position': position,
-        'line': None,
-    }
-    print "Payload: %s" % payload
-    requester(
-        'https://api.github.com/repos/%s/commits/%s/comments' % (reponame, commit),
-        payload
-        )
-
-
-def pr_post(reponame, user, password, commit, num, position, txt, path):
-    payload = {
-        'body': txt,
-        'commit_id': commit, # sha
-        'path': path, # relative file path
-        'position': position, # line index into the diff
-    }
-
-    return requester(
-        'https://api.github.com/repos/%s/pulls/%s/comments' % (reponame, num),
-        payload)
-
+def get_sha_for_pr(requester, reponame, number):
+    "Returns tuple of (branch_point, pr_head)"
+    resp = requester.get('https://api.github.com/repos/%s/pulls/%s' % (reponame, number))
+    return resp.json['base']['sha'], resp.json['head']['sha']
 
 if __name__ == '__main__':
     import argparse
@@ -240,13 +291,24 @@ if __name__ == '__main__':
     commit = args.commit
     origin_commit = args.origin_commit
     no_post = args.no_post
+    gh_req = GithubRequester(args.github_username, args.github_password)
+    pr_num = args.pr_number
+
+    if pr_num != 0:
+        origin_commit, commit = get_sha_for_pr(gh_req, repo_name, args.pr_num)
+        reporter = PRReporter(gh_req, pr_num)
+
+    elif commit is not None:
+        reporter = CommitReporter(gh_req)
+
+    if no_post:
+        reporter = PrintingReporter()
 
     if args.debug:
         log.setLevel(logging.DEBUG)
 
-    gh_req = GithubRequester(args.github_username, args.github_password)
-
-    manager = RepoManager(ignore_cleanup=args.debug, authenticated=args.authenticated)
+    manager = RepoManager(ignore_cleanup=args.debug,
+                          authenticated=args.authenticated)
     try:
         repo = manager.clone_repo(repo_name)
         diff = apply_commit(repo, commit, origin_commit)
@@ -269,21 +331,7 @@ if __name__ == '__main__':
 
             matching_numbers = set(added_lines).intersection(violating_lines)
             for x in matching_numbers:
-                if no_post:
-                    print "Would have posted the following: \n" \
-                      "commit: %(commit)s\n" \
-                      "position: %(position)s\n" \
-                      "message: %(message)s\n" \
-                      "file: %(filename)s\n" \
-                      "repo: %(repo)s\n" % {
-                          'repo': repo.name,
-                          'commit': commit,
-                          'position': posMap[x],
-                          'message': violations['%s' % x],
-                          'filename': entry.result_filename
-                      }
-                else:
-                    commit_post(repo.name, gh_req,
+                    reporter.report_line(repo.name,
                                 commit, posMap[x], violations['%s' % x], entry.result_filename)
     finally:
         manager.cleanup()
