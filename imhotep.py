@@ -6,6 +6,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 import subprocess
+import re
 
 from github_parse import DiffContextParser
 
@@ -33,6 +34,27 @@ class Tool(object):
 def run(cmd):
     return subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
 
+
+class JSHint(Tool):
+    response_format = re.compile(r'^(?P<filename>.*): line (?P<line_number>\d+), col \d+, (?P<message>.*)$')
+    jshintrc_filename = '.jshintrc'
+
+    def invoke(self, dirname, filenames=set()):
+        to_return = defaultdict(lambda: defaultdict(list))
+        cmd = 'find %s -name "*.js" | ' \
+          " xargs jshint " % dirname
+        jshint_file = os.path.join(dirname, self.jshintrc_filename)
+        if os.path.exists(jshint_file):
+            cmd += "--config=%s" % jshint_file
+        result = run(cmd)
+        # format:
+        # cssauron/index.js: line 87, col 12, Missing semicolon.
+        for l in result.split("\n"):
+            line = l[len(dirname)+1:] # +1 for trailing slash to make relative dir
+            match = self.response_format.search(line)
+            if match is not None:
+                to_return[match.group('filename')][match.group('line_number')].append(match.group('message'))
+        return to_return
 
 class PyLint(Tool):
     pylintrc_filename = '.pylintrc'
@@ -106,7 +128,7 @@ class Repository(object):
         return self.name
 
     def get_tools(self):
-        return [PyLint()]
+        return [PyLint(), JSHint()]
 
 
 
@@ -183,12 +205,17 @@ if __name__ == '__main__':
         '--github-password',
         required=True,
         help='Github password for the above user.')
+    parser.add_argument(
+        '--no-post',
+        action="store_true",
+        help="[DEBUG] will print out comments rather than posting to github.")
 
     # parse out repo name
     args = parser.parse_args()
     repo_name = args.repo_name
     commit = args.commit
     origin_commit = args.origin_commit
+    no_post = args.no_post
 
     if args.debug:
         log.setLevel(logging.DEBUG)
@@ -221,7 +248,21 @@ if __name__ == '__main__':
 
             matching_numbers = set(added_lines).intersection(violating_lines)
             for x in matching_numbers:
-                commit_post(repo.name, credentials['user'], credentials['password'],
-                            commit, posMap[x], violations['%s' % x], entry.result_filename)
+                if no_post:
+                    print "Would have posted the following: \n" \
+                      "commit: %(commit)s\n" \
+                      "position: %(position)s\n" \
+                      "message: %(message)s\n" \
+                      "file: %(filename)s\n" \
+                      "repo: %(repo)s\n" % {
+                          'repo': repo.name,
+                          'commit': commit,
+                          'position': posMap[x],
+                          'message': violations['%s' % x],
+                          'filename': entry.result_filename
+                      }
+                else:
+                    commit_post(repo.name, credentials['user'], credentials['password'],
+                                commit, posMap[x], violations['%s' % x], entry.result_filename)
     finally:
         manager.cleanup()
