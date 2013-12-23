@@ -7,6 +7,7 @@ from requests.auth import HTTPBasicAuth
 import json
 import subprocess
 import re
+import sys
 
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from tools import PyLint, JSHint
@@ -125,8 +126,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--repo_name', required=True,
         help="Github repository name in owner/repo format")
-    parser.add_argument('--commit', required=True,
-                        help="The sha of the commit to run static analysis on.")
+    parser.add_argument(
+        '--commit',
+        help="The sha of the commit to run static analysis on.")
     parser.add_argument(
         '--origin-commit',
         required=False,
@@ -161,6 +163,11 @@ if __name__ == '__main__':
 
     # parse out repo name
     args = parser.parse_args()
+
+    if args.commit == "" and args.pr_number == "":
+        print "You must specify a commit or PR number"
+        sys.exit(1)
+
     repo_name = args.repo_name
     commit = args.commit
     origin_commit = args.origin_commit
@@ -182,7 +189,7 @@ if __name__ == '__main__':
 
     manager = RepoManager(ignore_cleanup=args.debug,
                           authenticated=args.authenticated)
-    
+
     try:
         repo = manager.clone_repo(repo_name)
         diff = apply_commit(repo, commit, origin_commit)
