@@ -2,10 +2,10 @@ from collections import defaultdict
 import logging
 import os
 from tempfile import mkdtemp
-import envoy
 import requests
 from requests.auth import HTTPBasicAuth
 import json
+import subprocess
 
 
 logging.basicConfig()
@@ -28,6 +28,9 @@ class Tool(object):
         """
         raise NotImplementedError
 
+def run(cmd):
+    return subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
+
 
 class PyLint(Tool):
     pylintrc_filename = '.pylintrc'
@@ -42,12 +45,12 @@ class PyLint(Tool):
             cmd += " --rcfile=%s" % os.path.join(
                 dirname, self.pylintrc_filename)
 
-        result = envoy.run(cmd % dirname)
+        result = run(cmd % dirname)
         # splitting based on newline + dirname and trailing slash will make
         # beginning of line until first colon the relative filename. It also has
         # the nice side effect of allowing us multi-line output from the tool
         # without things breaking.
-        for line in result.std_out.split("\n%s/" % dirname):
+        for line in result.split("\n%s/" % dirname):
             if len(line) == 0:
                 continue
             filename, line_num, error = line.split(':', 2)
@@ -75,14 +78,14 @@ class RepoManager(object):
         self.to_cleanup[repo_name] = dirname
         repo = Repository(repo_name, dirname)
         log.debug("Cloning %s to %s", repo.download_location, dirname)
-        envoy.run("git clone %s %s" % (repo.download_location, dirname))
+        run("git clone %s %s" % (repo.download_location, dirname))
         return repo
 
     def cleanup(self):
         if self.should_cleanup:
             for repo_dir in self.to_cleanup.values():
                 log.debug("Cleaning up %s", repo_dir)
-                envoy.run('rm -rf %s' % repo_dir)
+                run('rm -rf %s' % repo_dir)
 
 
 class Repository(object):
@@ -104,8 +107,12 @@ class Repository(object):
         return [PyLint()]
 
 
-def apply_commit(repo, commit):
-    envoy.run("cd %s && git checkout %s" % (repo.dirname, commit))
+
+def apply_commit(repo, commit, compare_point="HEAD^"):
+    # @@@ This is a security hazard as compare-point is user-passed in
+    # data. Doesn't matter until we wrap this in a service.
+    run("cd %s && git checkout %s" % (repo.dirname, commit))
+    return run("cd %s && git diff %s" % (repo.dirname, compare_point))
 
 
 def run_analysis(repo, filenames=set()):

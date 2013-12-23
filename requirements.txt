@@ -1,4 +1,3 @@
-envoy==0.0.2
 logilab-astng==0.24.1
 logilab-common==0.58.3
 pylint==0.26.0
