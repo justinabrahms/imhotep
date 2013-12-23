@@ -7,6 +7,8 @@ from requests.auth import HTTPBasicAuth
 import json
 import subprocess
 
+from github_parse import DiffContextParser
+
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
@@ -66,8 +68,8 @@ class RepoManager(object):
     """
     to_cleanup = {}
 
-    def __init__(self, cleanup=False):
-        self.should_cleanup = cleanup
+    def __init__(self, ignore_cleanup=False):
+        self.should_cleanup = not ignore_cleanup
 
     # TODO(justinabrahms): Implement caching of repos.
     def clone_repo(self, repo_name):
@@ -124,41 +126,32 @@ def run_analysis(repo, filenames=set()):
     return results
 
 
-class ResultSet(object):
-    def __init__(self):
-        self.results = []
+def commit_post(reponame, user, password, commit, position, txt, path):
+    payload = {
+        'body': txt,
+        'sha': commit,
+        'path': path,
+        'position': position,
+        'line': None,
+    }
+    print "Payload: %s" % payload
+    return requests.post(
+        'https://api.github.com/repos/%s/commits/%s/comments' % (reponame, commit),
+        data=json.dumps(payload),
+        auth=HTTPBasicAuth(user, password))
 
-    def add(self, filename, line, result):
-        self.results.append({'filename': filename,
-                             'line': int(line),
-                             'result': result})
 
-    def sort(self):
-        self.results.sort(key=lambda x: (x['filename'], x['line']))
-
-    def github_print(self):
-        return '\n'.join("%s:%s - %s" % (x['filename'], x['line'], x['result'])
-                         for x in self.results)
-
-def post_comments(repo, credentials, commit, results):
-    payloads = []
-    rs = ResultSet()
-    for filename, line_results in results.items():
-        for line, results in line_results.items():
-            for result in results:
-                rs.add(filename, line, result)
-
-    rs.sort()
-    body_txt = "Found the following errors:\n\n%s" % rs.github_print()
-
-    # auth to github
-    # post commit comment for file in results.
+def pr_post(reponame, user, passw, num, position, txt):
     resp = requests.post(
-        'https://api.github.com/repos/%s/commits/%s/comments' % (repo.name,
-                                                                 commit),
-        data=json.dumps({'body': body_txt}),
-        auth=HTTPBasicAuth(credentials['user'],
-                           credentials['password']))
+        'https://api.github.com/repos/%s/pulls/%s/comments' % (reponame, num),
+        data=json.dumps({
+            'body': body_txt,
+            'commit_id': '', # sha
+            'path': '', # relative file path
+            'position': 0, # line index into the diff
+        }),
+        auth=HTTPBasicAuth(user,
+                           passw))
 
 
 if __name__ == '__main__':
@@ -171,10 +164,16 @@ if __name__ == '__main__':
     parser.add_argument('--commit', required=True,
                         help="The sha of the commit to run static analysis on.")
     parser.add_argument(
+        '--origin-commit',
+        required=False,
+        default='HEAD^',
+        help='Commit to use as the comparison point.')
+    parser.add_argument(
         '--filenames', nargs="+",
         help="filenames you want static analysis to be limited to.")
     parser.add_argument(
-        '--debug', action='store_true',
+        '--debug',
+        action='store_true',
         help="Will dump debugging output and won't clean up after itself.")
     parser.add_argument(
         '--github-username',
@@ -184,10 +183,12 @@ if __name__ == '__main__':
         '--github-password',
         required=True,
         help='Github password for the above user.')
+
     # parse out repo name
     args = parser.parse_args()
     repo_name = args.repo_name
     commit = args.commit
+    origin_commit = args.origin_commit
 
     if args.debug:
         log.setLevel(logging.DEBUG)
@@ -197,11 +198,30 @@ if __name__ == '__main__':
         'password': args.github_password
     }
 
-    manager = RepoManager(cleanup=args.debug)
+    manager = RepoManager(ignore_cleanup=args.debug)
     try:
         repo = manager.clone_repo(repo_name)
-        apply_commit(repo, commit)
+        diff = apply_commit(repo, commit, origin_commit)
         results = run_analysis(repo, filenames=set(args.filenames or []))
-        post_comments(repo, credentials, commit, results)
+        # Move out to its own thing
+        dcp = DiffContextParser(diff)
+        z = dcp.parse()
+
+        # TODO(justinabrahms): Should add a flag which swaps out the endpoint
+        # for the pull request endpoint and auto-determines the diff-point (from
+        # the branch point of the PR)
+        for entry in z:
+            added_lines = [l.number for l in entry.added_lines]
+            posMap = {}
+            for x in entry.added_lines:
+                posMap[x.number] = x.position
+
+            violations = results.get(entry.result_filename, {})
+            violating_lines = [int(l) for l in violations.keys()]
+
+            matching_numbers = set(added_lines).intersection(violating_lines)
+            for x in matching_numbers:
+                commit_post(repo.name, credentials['user'], credentials['password'],
+                            commit, posMap[x], violations['%s' % x], entry.result_filename)
     finally:
         manager.cleanup()
