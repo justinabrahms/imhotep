@@ -9,6 +9,17 @@ class Tool(object):
     def __init__(self, command_executor):
         self.executor = command_executor
 
+    def process_line(self, line):
+        return []
+
+    def get_file_extension(self):
+        """
+        Returns a list of file extensions this tool should run against.
+
+        eg: ['.py', '.js']
+        """
+        return ['']
+
     def invoke(self, dirname, filenames=set()):
         """
         Returns results in the format of:
