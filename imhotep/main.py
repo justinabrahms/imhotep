@@ -190,6 +190,7 @@ if __name__ == '__main__':
         klass = ep.load()
         tools.append(klass(run))
 
+
     if pr_num != '':
         origin_commit, commit = get_sha_for_pr(gh_req, repo_name, pr_num)
         reporter = PRReporter(gh_req, pr_num)
