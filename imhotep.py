@@ -48,26 +48,36 @@ class RepoManager(object):
     """
     to_cleanup = {}
 
-    def __init__(self, ignore_cleanup=False, authenticated=False):
+    def __init__(self,
+                 ignore_cleanup=False,
+                 authenticated=False,
+                 cache_directory=None):
         self.should_cleanup = not ignore_cleanup
         self.authenticated = authenticated
+        self.cache_directory = cache_directory
 
     def get_repo_class(self):
         if self.authenticated:
             return AuthenticatedRepository
         return Repository
 
-    # TODO(justinabrahms): Implement caching of repos.
     def clone_repo(self, repo_name):
         "Clones the given repo and returns the Repository object."
         dired_repo_name = repo_name.replace('/', '__')
-        dirname = mkdtemp(suffix=dired_repo_name)
-
-        self.to_cleanup[repo_name] = dirname
+        if not self.cache_directory:
+            dirname = mkdtemp(suffix=dired_repo_name)
+            self.to_cleanup[repo_name] = dirname
+        else:
+            dirname = "%s/%s" % (self.cache_directory, dired_repo_name)
+            dirname = os.path.abspath(dirname)
         klass = self.get_repo_class()
         repo = klass(repo_name, dirname)
-        log.debug("Cloning %s to %s", repo.download_location, dirname)
-        run("git clone %s %s" % (repo.download_location, dirname))
+        if os.path.isdir("%s/.git" % dirname):
+            log.debug("Updating %s to %s", repo.download_location, dirname)
+            run("git checkout master && git pull --all")
+        else:
+            log.debug("Cloning %s to %s", repo.download_location, dirname)
+            run("git clone %s %s" % (repo.download_location, dirname))
         return repo
 
     def cleanup(self):
@@ -105,6 +115,7 @@ class AuthenticatedRepository(Repository):
 def apply_commit(repo, commit, compare_point="HEAD^"):
     # @@@ This is a security hazard as compare-point is user-passed in
     # data. Doesn't matter until we wrap this in a service.
+    log.debug("running: cd %s && git checkout %s", repo.dirname, commit)
     run("cd %s && git checkout %s" % (repo.dirname, commit))
     return run("cd %s && git diff %s" % (repo.dirname, compare_point))
 
@@ -165,7 +176,11 @@ if __name__ == '__main__':
     parser.add_argument(
         '--pr-number',
         help="Number of the pull request to comment on")
-
+    parser.add_argument(
+        '--cache-directory',
+        help="Path to directory to cache the repository",
+        type=str,
+        required=False)
     # parse out repo name
     args = parser.parse_args()
 
@@ -193,7 +208,8 @@ if __name__ == '__main__':
         log.setLevel(logging.DEBUG)
 
     manager = RepoManager(ignore_cleanup=args.debug,
-                          authenticated=args.authenticated)
+                          authenticated=args.authenticated,
+                          cache_directory=args.cache_directory)
 
     try:
         repo = manager.clone_repo(repo_name)

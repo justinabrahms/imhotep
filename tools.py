@@ -54,13 +54,17 @@ class PyLint(Tool):
         to_return = defaultdict(lambda: defaultdict(list))
         log.debug("Running pylint on %s", dirname)
         cmd = 'find %s -name "*.py" | ' \
-          'xargs pylint --output-format=parseable -rn'
+              'xargs pylint --output-format=parseable -rn'
 
         if os.path.exists(os.path.join(dirname, self.pylintrc_filename)):
             cmd += " --rcfile=%s" % os.path.join(
                 dirname, self.pylintrc_filename)
-
         result = self.executor(cmd % dirname)
+        # pylint is stupid, this should fix relative path linting
+        # if repo is checked out relitve to where imhotep is called.
+        if os.path.abspath('.') in dirname:
+            dirname = dirname[len(os.path.abspath('.'))+1:]
+
         # splitting based on newline + dirname and trailing slash will make
         # beginning of line until first colon the relative filename. It also has
         # the nice side effect of allowing us multi-line output from the tool
