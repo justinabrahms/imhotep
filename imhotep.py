@@ -48,11 +48,8 @@ class RepoManager(object):
     """
     to_cleanup = {}
 
-    def __init__(self,
-                 ignore_cleanup=False,
-                 authenticated=False,
-                 cache_directory=None):
-        self.should_cleanup = not ignore_cleanup
+    def __init__(self, authenticated=False, cache_directory=None):
+        self.should_cleanup = cache_directory is None
         self.authenticated = authenticated
         self.cache_directory = cache_directory
 
@@ -66,10 +63,10 @@ class RepoManager(object):
         dired_repo_name = repo_name.replace('/', '__')
         if not self.cache_directory:
             dirname = mkdtemp(suffix=dired_repo_name)
-            self.to_cleanup[repo_name] = dirname
         else:
-            dirname = "%s/%s" % (self.cache_directory, dired_repo_name)
-            dirname = os.path.abspath(dirname)
+            dirname = os.path.abspath("%s/%s" % (
+                self.cache_directory, dired_repo_name))
+        self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
         repo = klass(repo_name, dirname)
         if os.path.isdir("%s/.git" % dirname):
@@ -207,8 +204,7 @@ if __name__ == '__main__':
     if args.debug:
         log.setLevel(logging.DEBUG)
 
-    manager = RepoManager(ignore_cleanup=args.debug,
-                          authenticated=args.authenticated,
+    manager = RepoManager(authenticated=args.authenticated,
                           cache_directory=args.cache_directory)
 
     try:
