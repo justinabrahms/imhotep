@@ -14,10 +14,10 @@ class Tool(object):
         Returns results in the format of:
 
         {'filename': {
-          'line_number': {
+          'line_number': [
             'error1',
             'error2'
-            }
+            ]
           }
         }
 
