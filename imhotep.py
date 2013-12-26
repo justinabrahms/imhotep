@@ -29,6 +29,7 @@ class GithubRequester(object):
 
     def get_auth(self):
         return HTTPBasicAuth(self.username, self.password)
+
     def get(self, url):
         return requests.get(url, auth=self.get_auth())
 
@@ -48,9 +49,10 @@ class RepoManager(object):
     """
     to_cleanup = {}
 
-    def __init__(self, ignore_cleanup=False, authenticated=False):
+    def __init__(self, ignore_cleanup=False, authenticated=False, tools=None):
         self.should_cleanup = not ignore_cleanup
         self.authenticated = authenticated
+        self.tools = tools or []
 
     def get_repo_class(self):
         if self.authenticated:
@@ -65,7 +67,7 @@ class RepoManager(object):
 
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
-        repo = klass(repo_name, dirname)
+        repo = klass(repo_name, dirname, tools)
         log.debug("Cloning %s to %s", repo.download_location, dirname)
         run("git clone %s %s" % (repo.download_location, dirname))
         return repo
@@ -81,9 +83,10 @@ class Repository(object):
     """
     Represents a github repository (both in the abstract and on disk).
     """
-    def __init__(self, name, loc):
+    def __init__(self, name, loc, tools):
         self.name = name
         self.dirname = loc
+        self.tools = tools
 
     @property
     def download_location(self):
@@ -93,7 +96,7 @@ class Repository(object):
         return self.name
 
     def get_tools(self):
-        return [PyLint(run), JSHint(run)]
+        return self.tools
 
 
 class AuthenticatedRepository(Repository):
@@ -180,6 +183,13 @@ if __name__ == '__main__':
     gh_req = GithubRequester(args.github_username, args.github_password)
     pr_num = args.pr_number
 
+
+    tools = []
+
+    for ep in iter_entry_points(group='linters'):
+        klass = ep.load()
+        tools.append(klass(run))
+
     if pr_num != '':
         origin_commit, commit = get_sha_for_pr(gh_req, repo_name, pr_num)
         reporter = PRReporter(gh_req, pr_num)
@@ -193,7 +203,8 @@ if __name__ == '__main__':
         log.setLevel(logging.DEBUG)
 
     manager = RepoManager(ignore_cleanup=args.debug,
-                          authenticated=args.authenticated)
+                          authenticated=args.authenticated,
+                          tools=tools)
 
     try:
         repo = manager.clone_repo(repo_name)
