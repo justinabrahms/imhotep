@@ -61,7 +61,7 @@ class PyLint(Tool):
                 dirname, self.pylintrc_filename)
         result = self.executor(cmd % dirname)
         # pylint is stupid, this should fix relative path linting
-        # if repo is checked out relitve to where imhotep is called.
+        # if repo is checked out relative to where imhotep is called.
         if os.path.abspath('.') in dirname:
             dirname = dirname[len(os.path.abspath('.'))+1:]
 
