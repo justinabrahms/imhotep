@@ -83,6 +83,8 @@ optional arguments:
   --authenticated       Indicates the repository requires authentication
   --pr-number PR_NUMBER
                         Number of the pull request to comment on
+  --cache-directory CACHE_DIRECTORY
+                          Path to directory to cache the repository
 ```
 
 ## Linter Support
