@@ -186,7 +186,7 @@ if __name__ == '__main__':
 
     tools = []
 
-    for ep in iter_entry_points(group='linters'):
+    for ep in iter_entry_points(group='imhotep_linters'):
         klass = ep.load()
         tools.append(klass(run))
 
