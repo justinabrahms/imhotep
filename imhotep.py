@@ -1,17 +1,17 @@
 from collections import defaultdict
+import json
 import logging
 import os
-from tempfile import mkdtemp
+import re
+from pkg_resources import iter_entry_points
 import requests
 from requests.auth import HTTPBasicAuth
-import json
 import subprocess
-import re
 import sys
+from tempfile import mkdtemp
 
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from tools import PyLint, JSHint
-
 from github_parse import DiffContextParser
 
 
