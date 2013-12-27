@@ -11,6 +11,7 @@ import sys
 from tempfile import mkdtemp
 
 from reporters import PrintingReporter, CommitReporter, PRReporter
+from repositories import Repository, AuthenticatedRepository
 from tools import PyLint, JSHint
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
@@ -123,6 +124,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Posts static analysis results to github.")
     parser.add_argument(
+        '--config-file',
+        type=str,
+        help="Configuration file in json.")
+    parser.add_argument(
         '--repo_name', required=True,
         help="Github repository name in owner/repo format")
     parser.add_argument(
@@ -142,11 +147,9 @@ if __name__ == '__main__':
         help="Will dump debugging output and won't clean up after itself.")
     parser.add_argument(
         '--github-username',
-        required=True,
         help='Github user to post comments as.')
     parser.add_argument(
         '--github-password',
-        required=True,
         help='Github password for the above user.')
     parser.add_argument(
         '--no-post',
@@ -166,20 +169,39 @@ if __name__ == '__main__':
         required=False)
     # parse out repo name
     args = parser.parse_args()
+    github_username = None
+    github_password = None
+    repo_name = None
+    cache_directory = None
+    config = {}
+    if args.config_file is not None:
+        config_path = os.path.abspath(args.config_file)
+        try:
+            config = json.loads(open(config_path).read())
+            if 'cache-directory' in config:
+                cache_directory = config['cache-directory']
+        except IOError:
+            print "Could not open config file %s" % config_path
+        except ValueError:
+            print "Could not parse config file %s" % config_path
 
     if args.commit == "" and args.pr_number == "":
         print "You must specify a commit or PR number"
         sys.exit(1)
-
-    repo_name = args.repo_name
+    if repo_name is None:
+        repo_name = args.repo_name
     commit = args.commit
     origin_commit = args.origin_commit
     no_post = args.no_post
-    gh_req = GithubRequester(args.github_username, args.github_password)
+    github_username = config.get('username', args.github_username)
+    github_password = config.get('password', args.github_password)
+    repo_name = config.get('repo', args.repo_name)
+    gh_req = GithubRequester(github_username, github_password)
     pr_num = args.pr_number
     remote_repo = None
     tools = load_plugins()
-
+    if cache_directory is None and args.cache_directory is not None:
+        cache_directory = args.cache_directory
     if pr_num != '':
         pr_info = get_pr_info(gh_req, repo_name, pr_num)
         origin_commit = pr_info.head_sha
@@ -199,7 +221,7 @@ if __name__ == '__main__':
         log.setLevel(logging.DEBUG)
 
     manager = RepoManager(authenticated=args.authenticated,
-                          cache_directory=args.cache_directory,
+                          cache_directory=cache_directory,
                           tools=tools)
 
     try:
