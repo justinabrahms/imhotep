@@ -25,6 +25,74 @@ class Tool(object):
         raise NotImplementedError
 
 
+class FoodCritic(Tool):
+    foodcriticrc_filename = '.foodcritic'
+
+    def invoke(self, dirname, filenames=set()):
+        from main import run
+        to_return = defaultdict(lambda: defaultdict(list))
+        line_re = re.compile(
+            "(?P<message>\w+: [^:]+): (?P<filename>[^:]+):(?P<line_number>\d+)"
+        )
+        cmd = (
+            "find {path} -name *recipes* -type d | "
+            "sed 's/recipes//g'"
+        )
+        result = self.executor(cmd.format(path=dirname))
+        # We want to run foodcritic for each path beacuse some recipes
+        # are so borked that they break foodcritic.  Let those fail without
+        # shitting on everything.
+        for path in result.split('\n'):
+            log.debug("Running foodcritic on %s", path)
+            result = run("foodcritic {0}".format(path))
+            for line in ifilter(lambda x: x, result.split('\n')):
+                match = line_re.search(line)
+                if match is None:
+                    continue
+                filename = match.group('filename')
+                line_num = match.group('line_number')
+                message = match.group('message')
+                if not line_num.isdigit():
+                    # Fuck EOF errors
+                    continue
+                to_return[filename][line_num].append(message)
+        return to_return
+
+
+class Tailor(Tool):
+    tailorrc_filename = '.tailor'
+
+    def invoke(self, dirname, filenames=set()):
+        from main import run
+        to_return = defaultdict(lambda: defaultdict(list))
+        config_path = os.path.join(dirname, self.tailorrc_filename)
+        if not os.path.exists(config_path):
+            log.debug(
+                "{0} is being skipped because it does "
+                "not contain a .tailor file".format(config_path)
+            )
+            return to_return
+        # tailor requires an output format to be specified to output yaml
+        # which is why we use the temporary results.yaml
+        cmd = (
+            "tailor "
+            "--output-file=results.yaml "
+            "{path} 2>&1 > /dev/null"
+        )
+        results = run("find {dirname} -name '*.rb'".format(dirname=dirname))
+        log.debug("Running tailor on %s", dirname)
+        for path in results.split('\n'):
+            run(cmd.format(path=path))
+            with open('results.yaml') as f:
+                for filename, errors in yaml.load(f).items():
+                    for error in errors:
+                        message = error[':message']
+                        line_number = error[':line']
+                        to_return[filename][line_number].append(message)
+
+        return to_return
+
+
 class JSHint(Tool):
     response_format = re.compile(r'^(?P<filename>.*): line (?P<line_number>\d+), col \d+, (?P<message>.*)$')
     jshintrc_filename = '.jshintrc'

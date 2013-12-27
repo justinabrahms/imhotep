@@ -11,10 +11,10 @@ import sys
 from tempfile import mkdtemp
 
 from reporters import PrintingReporter, CommitReporter, PRReporter
-from tools import PyLint, JSHint
+from tools import PyLint, JSHint, FoodCritic, Tailor
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
-
+from repositories import AuthenticatedRepository, Repository
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
