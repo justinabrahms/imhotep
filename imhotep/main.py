@@ -42,6 +42,7 @@ class GithubRequester(object):
 
 
 def run(cmd):
+    log.debug("Running: %s", cmd)
     return subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
 
 
@@ -81,8 +82,7 @@ class RepoManager(object):
             run("git clone %s %s" % (repo.download_location, dirname))
 
         if remote_repo is not None:
-            log.debug("Pulling remote branch from %s", remote_repo['clone_url'])
-            log.debug("running: git remote add %(login)s %(clone_url)s" % remote_repo)
+            log.debug("Pulling remote branch from %s", remote_repo.url)
             run("cd %s && git remote add %s %s" % (dirname,
                                                    remote_repo.name,
                                                    remote_repo.url))
@@ -125,7 +125,6 @@ class AuthenticatedRepository(Repository):
 def apply_commit(repo, commit, compare_point="HEAD^"):
     # @@@ This is a security hazard as compare-point is user-passed in
     # data. Doesn't matter until we wrap this in a service.
-    log.debug("running: cd %s && git checkout %s", repo.dirname, commit)
     run("cd %s && git checkout %s" % (repo.dirname, commit))
     return run("cd %s && git diff %s" % (repo.dirname, compare_point))
 
