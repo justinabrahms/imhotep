@@ -50,6 +50,17 @@ class DiffContextParser:
             'removed_lines': [],
         }
 
+    def should_skip_line(self, line):
+        # "index oldsha..newsha permissions" line
+        if re.search(r'index \w+..\w+ \d', line):
+            return True
+        # --- a/.gitignore
+        # +++ b/.gitignore
+        elif re.search('(-|\+){3} (a|b)/.*', line):
+            return True
+        return False
+
+
     def parse(self):
         """
         Parses everyting into a datastructure that looks like:
@@ -85,16 +96,8 @@ class DiffContextParser:
                 position = 0
                 continue
 
-            # "index oldsha..newsha permissions" line
-            if re.search(r'index \w+..\w+ \d', line):
+            if self.should_skip_line(line):
                 continue
-            # --- a/.gitignore
-            elif line.startswith('---'):
-                continue # handled in the `diff` line
-            # +++ b/.gitignore
-            elif line.startswith('+++'):
-                continue # handled in the `diff` line
-
 
             header = diff_re.search(line)
             if header is not None:
