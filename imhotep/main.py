@@ -11,6 +11,7 @@ import sys
 from tempfile import mkdtemp
 
 from reporters import PrintingReporter, CommitReporter, PRReporter
+from repositories import Repository, AuthenticatedRepository
 from tools import PyLint, JSHint
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
@@ -123,7 +124,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Posts static analysis results to github.")
     parser.add_argument(
-        '--config_file',
+        '--config-file',
         type=str,
         help="Configuration file in json.")
     parser.add_argument(
@@ -146,11 +147,9 @@ if __name__ == '__main__':
         help="Will dump debugging output and won't clean up after itself.")
     parser.add_argument(
         '--github-username',
-        required=True,
         help='Github user to post comments as.')
     parser.add_argument(
         '--github-password',
-        required=True,
         help='Github password for the above user.')
     parser.add_argument(
         '--no-post',
@@ -174,8 +173,8 @@ if __name__ == '__main__':
     github_password = None
     repo_name = None
     cache_directory = None
-    if parser.confg_file is not None:
-        config_path = os.path.abspath(parser.config_file)
+    if args.config_file is not None:
+        config_path = os.path.abspath(args.config_file)
         try:
             config = json.loads(open(config_path).read())
             if 'username' in config:
