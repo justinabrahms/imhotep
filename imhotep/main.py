@@ -207,10 +207,11 @@ if __name__ == '__main__':
         diff = apply_commit(repo, commit, origin_commit)
         results = run_analysis(repo, filenames=set(args.filenames or []))
         # Move out to its own thing
-        dcp = DiffContextParser(diff)
-        z = dcp.parse()
+        parser = DiffContextParser(diff)
+        parse_results = parser.parse()
 
-        for entry in z:
+        error_count = 0
+        for entry in parse_results:
             added_lines = [l.number for l in entry.added_lines]
             posMap = {}
             for x in entry.added_lines:
@@ -221,10 +222,12 @@ if __name__ == '__main__':
 
             matching_numbers = set(added_lines).intersection(violating_lines)
             for x in matching_numbers:
+                error_count += 1
                 reporter.report_line(
                     repo.name, commit, entry.result_filename, x,
                     posMap[x], violations['%s' % x])
-        if not z:
-            log.info("No violations. Kudos!")
+
+        log.info("%d violations.", error_count);
+
     finally:
         manager.cleanup()
