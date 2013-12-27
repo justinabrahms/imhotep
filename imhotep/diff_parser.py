@@ -33,22 +33,12 @@ class Entry(object):
         self.result_lines.append(line)
 
     def is_dirty(self):
-        return self.result_lines != '' or self.origin_lines != ''
+        return self.result_lines or self.origin_lines
 
 class DiffContextParser:
 
     def __init__(self, diff_text):
         self.diff_text = diff_text
-
-    def new_entry(self):
-        return {
-            'origin_filename': '',
-            'result_filename': '',
-            'origin_lines': [],
-            'result_lines': [],
-            'added_lines': [],
-            'removed_lines': [],
-        }
 
     def should_skip_line(self, line):
         # "index oldsha..newsha permissions" line
@@ -103,14 +93,8 @@ class DiffContextParser:
             if header is not None:
                 before_line_number = int(header.group('removed_start'))
                 after_line_number = int(header.group('added_start'))
-                if z.is_dirty():
-                    """
-                    We can have multiple headers through the file, so we
-                    increment position on all others.
-                    """
-                    position += 1
+                position += 1
                 continue
-
 
             # removed line
             if line.startswith('-'):
