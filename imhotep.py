@@ -55,13 +55,15 @@ class RepoManager(object):
         self.should_cleanup = not ignore_cleanup
         self.authenticated = authenticated
         self.cache_directory = cache_directory
+        if self.cache_directory is not None:
+            self.should_cleanup = False
 
     def get_repo_class(self):
         if self.authenticated:
             return AuthenticatedRepository
         return Repository
 
-    def clone_repo(self, repo_name):
+    def clone_repo(self, repo_name, remote_repo):
         "Clones the given repo and returns the Repository object."
         dired_repo_name = repo_name.replace('/', '__')
         if not self.cache_directory:
@@ -78,6 +80,10 @@ class RepoManager(object):
         else:
             log.debug("Cloning %s to %s", repo.download_location, dirname)
             run("git clone %s %s" % (repo.download_location, dirname))
+
+        if remote_repo is not None:
+            log.debug("Pulling remote branch from %s", remote_repo['clone_url'])
+            run("git remote add %(login)s %(clone_url)s && git pull --all" % remote_repo)
         return repo
 
     def cleanup(self):
@@ -129,10 +135,16 @@ def run_analysis(repo, filenames=set()):
     return results
 
 
-def get_sha_for_pr(requester, reponame, number):
-    "Returns tuple of (branch_point, pr_head)"
+def get_pr_info(requester, reponame, number):
+    "Returns the PR as a dictionary"
     resp = requester.get('https://api.github.com/repos/%s/pulls/%s' % (reponame, number))
-    return resp.json['base']['sha'], resp.json['head']['sha']
+    return resp.json
+
+
+def get_repos_for_pr(requester, reponame, number):
+    "Returns a tuple of (base metadata, head metadata)"
+    resp = get_pr_info(requester, reponame, number)
+    return (resp['base'], resp['head'])
 
 
 if __name__ == '__main__':
@@ -194,10 +206,16 @@ if __name__ == '__main__':
     no_post = args.no_post
     gh_req = GithubRequester(args.github_username, args.github_password)
     pr_num = args.pr_number
-
+    remote_repo = None
     if pr_num != '':
-        origin_commit, commit = get_sha_for_pr(gh_req, repo_name, pr_num)
+        base_repo, head_repo = get_repos_for_pr(gh_req, repo_name, pr_num)
+        origin_commit = head_repo['sha']
+        commit = base_repo['sha']
         reporter = PRReporter(gh_req, pr_num)
+        if base_repo['repo']['owner']['login'] != head_repo['repo']['owner']['login']:
+            remote_repo = {'clone_url': head_repo['repo']['clone_url'],
+                           'login': head_repo['repo']['owner']['login']}
+
     elif commit is not None:
         reporter = CommitReporter(gh_req)
 
@@ -212,7 +230,7 @@ if __name__ == '__main__':
                           cache_directory=args.cache_directory)
 
     try:
-        repo = manager.clone_repo(repo_name)
+        repo = manager.clone_repo(repo_name, remote_repo=remote_repo)
         diff = apply_commit(repo, commit, origin_commit)
         results = run_analysis(repo, filenames=set(args.filenames or []))
         # Move out to its own thing
