@@ -1,8 +1,6 @@
-from collections import defaultdict
 import json
 import logging
 import os
-import re
 from pkg_resources import iter_entry_points
 import requests
 from requests.auth import HTTPBasicAuth
@@ -10,11 +8,11 @@ import subprocess
 import sys
 from tempfile import mkdtemp
 
+from repositories import AuthenticatedRepository, Repository
 from reporters import PrintingReporter, CommitReporter, PRReporter
-from tools import PyLint, JSHint, FoodCritic, Tailor
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
-from repositories import AuthenticatedRepository, Repository
+
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
@@ -95,7 +93,6 @@ class RepoManager(object):
                 run('rm -rf %s' % repo_dir)
 
 
-
 def apply_commit(repo, commit, compare_point="HEAD^"):
     # @@@ This is a security hazard as compare-point is user-passed in
     # data. Doesn't matter until we wrap this in a service.
@@ -110,6 +107,7 @@ def run_analysis(repo, filenames=set()):
         run_results = tool.invoke(repo.dirname, filenames=filenames)
         results.update(run_results)
     return results
+
 
 def load_plugins():
     tools = []
@@ -226,8 +224,7 @@ if __name__ == '__main__':
                 reporter.report_line(
                     repo.name, commit, entry.result_filename, x,
                     posMap[x], violations['%s' % x])
-
-        log.info("%d violations.", error_count);
+        log.info("%d violations.", error_count)
 
     finally:
         manager.cleanup()
