@@ -1,4 +1,4 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 import json
 import logging
 import os
@@ -19,8 +19,6 @@ from pull_requests import get_pr_info
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
-
-Remote = namedtuple('Remote', ['name', 'url'])
 
 class GithubRequester(object):
     """
@@ -97,31 +95,6 @@ class RepoManager(object):
                 run('rm -rf %s' % repo_dir)
 
 
-class Repository(object):
-    """
-    Represents a github repository (both in the abstract and on disk).
-    """
-    def __init__(self, name, loc, tools):
-        self.name = name
-        self.dirname = loc
-        self.tools = tools
-
-    @property
-    def download_location(self):
-        return "git://github.com/%s.git" % self.name
-
-    def __unicode__(self):
-        return self.name
-
-    def get_tools(self):
-        return self.tools
-
-
-class AuthenticatedRepository(Repository):
-    @property
-    def download_location(self):
-        return "git@github.com:%s.git" % self.name
-
 
 def apply_commit(repo, commit, compare_point="HEAD^"):
     # @@@ This is a security hazard as compare-point is user-passed in
@@ -138,6 +111,12 @@ def run_analysis(repo, filenames=set()):
         results.update(run_results)
     return results
 
+def load_plugins():
+    tools = []
+    for ep in iter_entry_points(group='imhotep_linters'):
+        klass = ep.load()
+        tools.append(klass(run))
+    return tools
 
 if __name__ == '__main__':
     import argparse
@@ -199,11 +178,7 @@ if __name__ == '__main__':
     gh_req = GithubRequester(args.github_username, args.github_password)
     pr_num = args.pr_number
     remote_repo = None
-    tools = []
-
-    for ep in iter_entry_points(group='imhotep_linters'):
-        klass = ep.load()
-        tools.append(klass(run))
+    tools = load_plugins()
 
     if pr_num != '':
         pr_info = get_pr_info(gh_req, repo_name, pr_num)

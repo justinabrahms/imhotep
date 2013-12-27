@@ -1,6 +1,6 @@
 import os
 import json
-from imhotep.main import PRInfo
+from imhotep.pull_requests import PRInfo
 
 dir = os.path.dirname(__file__)
 fixture_path = lambda s: os.path.join(dir, 'fixtures/', s)
