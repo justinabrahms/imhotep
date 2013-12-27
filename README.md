@@ -2,6 +2,7 @@
 # Imhotep, the peaceful builder.
 
 ![travis-ci](https://travis-ci.org/justinabrahms/imhotep.png)
+[![Coverage Status](https://coveralls.io/repos/justinabrahms/imhotep/badge.png?branch=master)](https://coveralls.io/r/justinabrahms/imhotep?branch=master)
 
 ## What is it?
 Imhotep is a tool which will comment on commits coming into your
