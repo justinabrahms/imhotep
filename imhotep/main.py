@@ -273,9 +273,9 @@ if __name__ == '__main__':
 
             matching_numbers = set(added_lines).intersection(violating_lines)
             for x in matching_numbers:
-                    reporter.report_line(
-                            repo.name, commit, entry.result_filename, x,
-                            posMap[x], violations['%s' % x])
+                reporter.report_line(
+                    repo.name, commit, entry.result_filename, x,
+                    posMap[x], violations['%s' % x])
         if not z:
             log.info("No violations. Kudos!")
     finally:
