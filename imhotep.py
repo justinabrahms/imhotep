@@ -83,7 +83,11 @@ class RepoManager(object):
 
         if remote_repo is not None:
             log.debug("Pulling remote branch from %s", remote_repo['clone_url'])
-            run("git remote add %(login)s %(clone_url)s && git pull --all" % remote_repo)
+            log.debug("running: git remote add %(login)s %(clone_url)s" % remote_repo)
+            run("cd %s && git remote add %s %s" % (dirname,
+                                                   remote_repo['login'],
+                                                   remote_repo['clone_url']))
+            run("cd %s && git pull --all" % dirname)
         return repo
 
     def cleanup(self):
