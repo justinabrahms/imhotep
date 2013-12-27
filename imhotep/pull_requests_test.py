@@ -1,6 +1,8 @@
 import os
 import json
-from imhotep.pull_requests import PRInfo
+from collections import namedtuple
+
+from imhotep.pull_requests import PRInfo, get_pr_info
 
 dir = os.path.dirname(__file__)
 fixture_path = lambda s: os.path.join(dir, 'fixtures/', s)
@@ -33,3 +35,13 @@ def test_pr_info_remote_repo():
     remote = remote_pr.remote_repo
     assert remote.name == 'scottjab'
     assert remote.url == 'https://github.com/scottjab/imhotep.git'
+
+def test_pr_info():
+    json_wrapper = namedtuple('wrapper', ('json',))
+    class Requester(object):
+        def get(self, url):
+            self.url = url
+            return json_wrapper(remote_json_fixture)
+    r = Requester()
+    pri = get_pr_info(r, 'justinabrahms/imhotep', 10)
+    assert r.url == 'https://api.github.com/repos/justinabrahms/imhotep/pulls/10'
