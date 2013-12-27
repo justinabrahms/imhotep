@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import json
 import logging
 import os
@@ -18,6 +18,8 @@ from github_parse import DiffContextParser
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
+
+Remote = namedtuple('Remote', ['name', 'url'])
 
 class GithubRequester(object):
     """
@@ -60,7 +62,7 @@ class RepoManager(object):
             return AuthenticatedRepository
         return Repository
 
-    def clone_repo(self, repo_name):
+    def clone_repo(self, repo_name, remote_repo):
         "Clones the given repo and returns the Repository object."
         dired_repo_name = repo_name.replace('/', '__')
         if not self.cache_directory:
@@ -73,10 +75,18 @@ class RepoManager(object):
         repo = klass(repo_name, dirname, tools)
         if os.path.isdir("%s/.git" % dirname):
             log.debug("Updating %s to %s", repo.download_location, dirname)
-            run("git checkout master && git pull --all")
+            run("cd %s && git checkout master && git pull --all" % dirname)
         else:
             log.debug("Cloning %s to %s", repo.download_location, dirname)
             run("git clone %s %s" % (repo.download_location, dirname))
+
+        if remote_repo is not None:
+            log.debug("Pulling remote branch from %s", remote_repo['clone_url'])
+            log.debug("running: git remote add %(login)s %(clone_url)s" % remote_repo)
+            run("cd %s && git remote add %s %s" % (dirname,
+                                                   remote_repo.name,
+                                                   remote_repo.url))
+            run("cd %s && git pull --all" % dirname)
         return repo
 
     def cleanup(self):
@@ -128,11 +138,33 @@ def run_analysis(repo, filenames=set()):
         results.update(run_results)
     return results
 
+class PRInfo(object):
+    def __init__(self, json):
+        self.json = json
 
-def get_sha_for_pr(requester, reponame, number):
-    "Returns tuple of (branch_point, pr_head)"
+    @property
+    def base_sha(self):
+        self.json['base']['sha']
+
+    @property
+    def head_sha(self):
+        self.json['head']['sha']
+
+    @property
+    def has_remote_repo(self):
+        return self.json['base']['repo']['owner']['login'] != self.json['head']['repo']['owner']['login']
+
+    @property
+    def remote_repo(self):
+        return Remote(login=head_repo['repo']['owner']['login'],
+                      url=head_repo['repo']['clone_url'])
+
+
+def get_pr_info(requester, reponame, number):
+    "Returns the PullRequest as a PRInfo object"
     resp = requester.get('https://api.github.com/repos/%s/pulls/%s' % (reponame, number))
-    return resp.json['base']['sha'], resp.json['head']['sha']
+    return PRInfo(resp.json)
+
 
 
 if __name__ == '__main__':
@@ -194,18 +226,22 @@ if __name__ == '__main__':
     no_post = args.no_post
     gh_req = GithubRequester(args.github_username, args.github_password)
     pr_num = args.pr_number
-
-
+    remote_repo = None
     tools = []
 
     for ep in iter_entry_points(group='imhotep_linters'):
         klass = ep.load()
         tools.append(klass(run))
 
-
     if pr_num != '':
-        origin_commit, commit = get_sha_for_pr(gh_req, repo_name, pr_num)
+        pr_info = get_pr_info(gh_req, pr_num)
+        origin_commit = pr_info.head_sha
+        commit = pr_info.base_sha
+        if pr_info.has_remote_repo:
+            remote_repo = pr_info.remote_repo
+
         reporter = PRReporter(gh_req, pr_num)
+
     elif commit is not None:
         reporter = CommitReporter(gh_req)
 
@@ -220,7 +256,7 @@ if __name__ == '__main__':
                           tools=tools)
 
     try:
-        repo = manager.clone_repo(repo_name)
+        repo = manager.clone_repo(repo_name, remote_repo=remote_repo)
         diff = apply_commit(repo, commit, origin_commit)
         results = run_analysis(repo, filenames=set(args.filenames or []))
         # Move out to its own thing
