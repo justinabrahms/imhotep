@@ -1,9 +1,11 @@
 from collections import defaultdict
+from itertools import ifilter
 import re
 import os
 import logging
 
 log = logging.getLogger(__name__)
+
 
 class Tool(object):
     def __init__(self, command_executor):
@@ -42,7 +44,11 @@ class FoodCritic(Tool):
         # We want to run foodcritic for each path beacuse some recipes
         # are so borked that they break foodcritic.  Let those fail without
         # shitting on everything.
-        for path in result.split('\n'):
+        if filesnames:
+            paths = filenames
+        else:
+            paths = result.split('\n')
+        for path in paths 
             log.debug("Running foodcritic on %s", path)
             result = run("foodcritic {0}".format(path))
             for line in ifilter(lambda x: x, result.split('\n')):
