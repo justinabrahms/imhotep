@@ -13,7 +13,9 @@ setup(
     entry_points={
         'imhotep_linters': [
             '.js = tools:JSHint',
-            '.py = tools:PyLint [pylint]'
+            '.py = tools:PyLint [pylint]',
+            '.rb = tools:Tailor',
+            '.chef = tools:FoodCritic'
         ],
     },
     extras_require={'pylint': 'PyLint'},
