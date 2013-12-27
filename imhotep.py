@@ -76,7 +76,7 @@ class RepoManager(object):
         repo = klass(repo_name, dirname)
         if os.path.isdir("%s/.git" % dirname):
             log.debug("Updating %s to %s", repo.download_location, dirname)
-            run("git checkout master && git pull --all")
+            run("cd %s && git checkout master && git pull --all" % dirname)
         else:
             log.debug("Cloning %s to %s", repo.download_location, dirname)
             run("git clone %s %s" % (repo.download_location, dirname))
