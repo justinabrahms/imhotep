@@ -2,10 +2,9 @@ import os
 import json
 from collections import namedtuple
 
+from imhotep.testing_utils import fixture_path
 from imhotep.pull_requests import PRInfo, get_pr_info
 
-dir = os.path.dirname(__file__)
-fixture_path = lambda s: os.path.join(dir, 'fixtures/', s)
 
 # via https://api.github.com/repos/justinabrahms/imhotep/pulls/10
 with open(fixture_path('remote_pr.json')) as f:

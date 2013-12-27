@@ -1,5 +1,6 @@
 import os
 from imhotep.diff_parser import DiffContextParser, Entry
+from imhotep.testing_utils import fixture_path
 
 def test_skip_line__minus():
     dcp = DiffContextParser("")
@@ -16,9 +17,6 @@ def test_skip_line__index():
 def test_skip_line__noskip():
     dcp = DiffContextParser("")
     assert not dcp.should_skip_line("+ this is a legit line")
-
-dir = os.path.dirname(__file__)
-fixture_path = lambda s: os.path.join(dir, 'fixtures/', s)
 
 with open(fixture_path('two-block.diff')) as f:
     two_block = f.read()
