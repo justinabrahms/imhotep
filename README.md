@@ -57,17 +57,20 @@ access token and use that for the `--github-password` above.
 
 ### Full Usage Info
 ```
-usage: imhotep.py [-h] --repo_name REPO_NAME [--commit COMMIT]
-                  [--origin-commit ORIGIN_COMMIT]
-                  [--filenames FILENAMES [FILENAMES ...]] [--debug]
-                  --github-username GITHUB_USERNAME --github-password
-                  GITHUB_PASSWORD [--no-post] [--authenticated]
-                  [--pr-number PR_NUMBER]
+usage: imhotep [-h] [--config-file CONFIG_FILE] --repo_name REPO_NAME
+               [--commit COMMIT] [--origin-commit ORIGIN_COMMIT]
+               [--filenames FILENAMES [FILENAMES ...]] [--debug]
+               [--github-username GITHUB_USERNAME]
+               [--github-password GITHUB_PASSWORD] [--no-post]
+               [--authenticated] [--pr-number PR_NUMBER]
+               [--cache-directory CACHE_DIRECTORY]
 
 Posts static analysis results to github.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --config-file CONFIG_FILE
+                        Configuration file in json.
   --repo_name REPO_NAME
                         Github repository name in owner/repo format
   --commit COMMIT       The sha of the commit to run static analysis on.
@@ -87,7 +90,7 @@ optional arguments:
   --pr-number PR_NUMBER
                         Number of the pull request to comment on
   --cache-directory CACHE_DIRECTORY
-                          Path to directory to cache the repository
+                        Path to directory to cache the repository
 ```
 
 ## Linter Support
