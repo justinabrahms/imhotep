@@ -1,0 +1,6 @@
+{
+  "username": "github_username",
+  "password": "github_password or token",
+  "repo": "username/reponame",
+  "cache-directory": "/path/to/optional/cache"
+}

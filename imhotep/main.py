@@ -123,6 +123,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Posts static analysis results to github.")
     parser.add_argument(
+        '--config_file',
+        type=str,
+        help="Configuration file in json.")
+    parser.add_argument(
         '--repo_name', required=True,
         help="Github repository name in owner/repo format")
     parser.add_argument(
@@ -166,20 +170,45 @@ if __name__ == '__main__':
         required=False)
     # parse out repo name
     args = parser.parse_args()
+    github_username = None
+    github_password = None
+    repo_name = None
+    cache_directory = None
+    if parser.confg_file is not None:
+        config_path = os.path.abspath(parser.config_file)
+        try:
+            config = json.loads(open(config_path).read())
+            if 'username' in config:
+                github_username = config['username']
+            if 'password' in config:
+                github_password = config['password']
+            if 'repo' in config:
+                repo_name = config['repo']
+            if 'cache-directory' in config:
+                cache_directory = config['cache-directory']
+        except IOError:
+            print "Could not open config file %s" % config_path
+        except ValueError:
+            print "Could not parse config file %s" % config_path
 
     if args.commit == "" and args.pr_number == "":
         print "You must specify a commit or PR number"
         sys.exit(1)
-
-    repo_name = args.repo_name
+    if repo_name is None:
+        repo_name = args.repo_name
     commit = args.commit
     origin_commit = args.origin_commit
     no_post = args.no_post
-    gh_req = GithubRequester(args.github_username, args.github_password)
+    if github_username is None:
+        github_username = args.github_username
+    if github_password is None:
+        github_password = args.github_password
+    gh_req = GithubRequester(github_username, github_password)
     pr_num = args.pr_number
     remote_repo = None
     tools = load_plugins()
-
+    if cache_directory is None and args.cache_directory is not None:
+        cache_directory = args.cache_directory
     if pr_num != '':
         pr_info = get_pr_info(gh_req, repo_name, pr_num)
         origin_commit = pr_info.head_sha
@@ -199,7 +228,7 @@ if __name__ == '__main__':
         log.setLevel(logging.DEBUG)
 
     manager = RepoManager(authenticated=args.authenticated,
-                          cache_directory=args.cache_directory,
+                          cache_directory=cache_directory,
                           tools=tools)
 
     try:

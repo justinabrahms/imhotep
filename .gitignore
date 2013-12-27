@@ -34,3 +34,6 @@ nosetests.xml
 .project
 .pydevproject
 *~
+
+# Ignore default config file name
+imhotep_config.json
