@@ -12,7 +12,7 @@ from tempfile import mkdtemp
 
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from tools import PyLint, JSHint
-from github_parse import DiffContextParser
+from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
 
 
