@@ -105,7 +105,7 @@ def apply_commit(repo, commit, compare_point="HEAD^"):
 
 def run_analysis(repo, filenames=set()):
     results = {}
-    for tool in repo.get_tools():
+    for tool in repo.tools:
         log.debug("running %s" % tool.__class__.__name__)
         run_results = tool.invoke(repo.dirname, filenames=filenames)
         results.update(run_results)

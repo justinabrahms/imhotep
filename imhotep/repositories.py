@@ -14,9 +14,6 @@ class Repository(object):
     def __unicode__(self):
         return self.name
 
-    def get_tools(self):
-        return self.tools
-
 
 class AuthenticatedRepository(Repository):
     @property
