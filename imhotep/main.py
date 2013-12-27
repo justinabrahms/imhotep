@@ -173,16 +173,11 @@ if __name__ == '__main__':
     github_password = None
     repo_name = None
     cache_directory = None
+    config = {}
     if args.config_file is not None:
         config_path = os.path.abspath(args.config_file)
         try:
             config = json.loads(open(config_path).read())
-            if 'username' in config:
-                github_username = config['username']
-            if 'password' in config:
-                github_password = config['password']
-            if 'repo' in config:
-                repo_name = config['repo']
             if 'cache-directory' in config:
                 cache_directory = config['cache-directory']
         except IOError:
@@ -198,10 +193,9 @@ if __name__ == '__main__':
     commit = args.commit
     origin_commit = args.origin_commit
     no_post = args.no_post
-    if github_username is None:
-        github_username = args.github_username
-    if github_password is None:
-        github_password = args.github_password
+    github_username = config.get('username', args.github_username)
+    github_password = config.get('password', args.github_password)
+    repo_name = config.get('repo', args.repo_name)
     gh_req = GithubRequester(github_username, github_password)
     pr_num = args.pr_number
     remote_repo = None
