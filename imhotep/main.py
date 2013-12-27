@@ -143,11 +143,11 @@ class PRInfo(object):
 
     @property
     def base_sha(self):
-        self.json['base']['sha']
+        return self.json['base']['sha']
 
     @property
     def head_sha(self):
-        self.json['head']['sha']
+        return self.json['head']['sha']
 
     @property
     def has_remote_repo(self):
@@ -155,8 +155,8 @@ class PRInfo(object):
 
     @property
     def remote_repo(self):
-        return Remote(login=head_repo['repo']['owner']['login'],
-                      url=head_repo['repo']['clone_url'])
+        return Remote(name=self.json['head']['repo']['owner']['login'],
+                      url=self.json['head']['repo']['clone_url'])
 
 
 def get_pr_info(requester, reponame, number):
@@ -233,7 +233,7 @@ if __name__ == '__main__':
         tools.append(klass(run))
 
     if pr_num != '':
-        pr_info = get_pr_info(gh_req, pr_num)
+        pr_info = get_pr_info(gh_req, repo_name, pr_num)
         origin_commit = pr_info.head_sha
         commit = pr_info.base_sha
         if pr_info.has_remote_repo:
@@ -276,5 +276,7 @@ if __name__ == '__main__':
                     reporter.report_line(
                             repo.name, commit, entry.result_filename, x,
                             posMap[x], violations['%s' % x])
+        if not z:
+            log.info("No violations. Kudos!")
     finally:
         manager.cleanup()
