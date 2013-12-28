@@ -115,7 +115,8 @@ def load_config(filename):
     if filename is not None:
         config_path = os.path.abspath(filename)
         try:
-            config = json.loads(open(config_path).read())
+            with open(config_path) as f:
+                config = json.loads(f.read())
         except IOError:
             print "Could not open config file %s" % config_path
         except ValueError:
