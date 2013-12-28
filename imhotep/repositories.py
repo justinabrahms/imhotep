@@ -1,8 +1,15 @@
+class ToolsNotFound(Exception):
+    pass
+
+
 class Repository(object):
     """
     Represents a github repository (both in the abstract and on disk).
     """
     def __init__(self, name, loc, tools, executor):
+        if len(tools) == 0:
+            raise ToolsNotFound()
+
         self.name = name
         self.dirname = loc
         self.tools = tools
