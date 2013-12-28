@@ -2,8 +2,6 @@ import json
 import logging
 import os
 from pkg_resources import iter_entry_points
-import requests
-from requests.auth import HTTPBasicAuth
 import subprocess
 import sys
 from tempfile import mkdtemp
@@ -12,30 +10,11 @@ from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
+from http import GithubRequester
 
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
-
-
-class GithubRequester(object):
-    """
-    Object used for issuing authenticated API calls to GitHub.
-    """
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-
-    def get_auth(self):
-        return HTTPBasicAuth(self.username, self.password)
-
-    def get(self, url):
-        return requests.get(url, auth=self.get_auth())
-
-    def post(self, url, payload):
-        return requests.post(
-            url, data=json.dumps(payload),
-            auth=self.get_auth())
 
 
 def run(cmd):
