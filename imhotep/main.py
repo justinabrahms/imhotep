@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
     gh_req = GithubRequester(github_username, github_password)
 
-    if pr_num != '':
+    if pr_num is not None:
         pr_info = get_pr_info(gh_req, repo_name, pr_num)
         origin_commit = pr_info.head_sha
         commit = pr_info.base_sha
@@ -226,6 +226,7 @@ if __name__ == '__main__':
                 posMap[x.number] = x.position
 
             violations = results.get(entry.result_filename, {})
+            print "violations: %s" % violations
             violating_lines = [int(l) for l in violations.keys()]
 
             matching_numbers = set(added_lines).intersection(violating_lines)
