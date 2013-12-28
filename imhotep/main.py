@@ -74,6 +74,7 @@ class RepoManager(object):
                 log.debug("Cleaning up %s", repo_dir)
                 run('rm -rf %s' % repo_dir)
 
+
 def run_analysis(repo, filenames=set()):
     results = {}
     for tool in repo.tools:
@@ -110,6 +111,7 @@ if __name__ == '__main__':
         description="Posts static analysis results to github.")
     parser.add_argument(
         '--config-file',
+        default="imhotep_config.json",
         type=str,
         help="Configuration file in json.")
     parser.add_argument(
@@ -152,9 +154,10 @@ if __name__ == '__main__':
         help="Path to directory to cache the repository",
         type=str,
         required=False)
+
     # parse out repo name
     args = parser.parse_args()
-    config = load_config(file)
+    config = load_config(args.config_file)
 
     if args.commit == "" and args.pr_number == "":
         print "You must specify a commit or PR number"
@@ -199,7 +202,6 @@ if __name__ == '__main__':
     manager = RepoManager(authenticated=args.authenticated,
                           cache_directory=cache_directory,
                           tools=tools,
-                          repo=repo_name,
                           executor=run)
 
     try:
