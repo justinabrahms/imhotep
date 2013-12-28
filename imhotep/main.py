@@ -109,6 +109,20 @@ def run_analysis(repo, filenames=set()):
         results.update(run_results)
     return results
 
+
+def load_config(filename):
+    config = {}
+    if filename is not None:
+        config_path = os.path.abspath(filename)
+        try:
+            config = json.loads(open(config_path).read())
+        except IOError:
+            print "Could not open config file %s" % config_path
+        except ValueError:
+            print "Could not parse config file %s" % config_path
+    return config
+
+
 def load_plugins():
     tools = []
     for ep in iter_entry_points(group='imhotep_linters'):
@@ -166,39 +180,26 @@ if __name__ == '__main__':
         required=False)
     # parse out repo name
     args = parser.parse_args()
-    github_username = None
-    github_password = None
-    repo_name = None
-    cache_directory = None
-    config = {}
-    if args.config_file is not None:
-        config_path = os.path.abspath(args.config_file)
-        try:
-            config = json.loads(open(config_path).read())
-            if 'cache-directory' in config:
-                cache_directory = config['cache-directory']
-        except IOError:
-            print "Could not open config file %s" % config_path
-        except ValueError:
-            print "Could not parse config file %s" % config_path
+    config = load_config(file)
 
     if args.commit == "" and args.pr_number == "":
         print "You must specify a commit or PR number"
         sys.exit(1)
-    if repo_name is None:
-        repo_name = args.repo_name
+
+    github_username = config.get('username', args.github_username)
+    github_password = config.get('password', args.github_password)
+    cache_directory = config.get('cache-directory', args.cache_directory)
+    repo_name = config.get('repo', args.repo_name)
+
+    pr_num = args.pr_number
     commit = args.commit
     origin_commit = args.origin_commit
     no_post = args.no_post
-    github_username = config.get('username', args.github_username)
-    github_password = config.get('password', args.github_password)
-    repo_name = config.get('repo', args.repo_name)
-    gh_req = GithubRequester(github_username, github_password)
-    pr_num = args.pr_number
     remote_repo = None
     tools = load_plugins()
-    if cache_directory is None and args.cache_directory is not None:
-        cache_directory = args.cache_directory
+
+    gh_req = GithubRequester(github_username, github_password)
+
     if pr_num != '':
         pr_info = get_pr_info(gh_req, repo_name, pr_num)
         origin_commit = pr_info.head_sha
