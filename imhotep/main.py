@@ -56,27 +56,29 @@ class RepoManager(object):
         dirname = self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
-        repo = klass(repo_name, dirname, tools, self.executor)
+        repo = klass(repo_name, dirname, self.tools, self.executor)
         if os.path.isdir("%s/.git" % dirname):
             log.debug("Updating %s to %s", repo.download_location, dirname)
-            run("cd %s && git checkout master && git pull --all" % dirname)
+            self.executor(
+                "cd %s && git checkout master && git pull --all" % dirname)
         else:
             log.debug("Cloning %s to %s", repo.download_location, dirname)
-            run("git clone %s %s" % (repo.download_location, dirname))
+            self.executor(
+                "git clone %s %s" % (repo.download_location, dirname))
 
         if remote_repo is not None:
             log.debug("Pulling remote branch from %s", remote_repo.url)
-            run("cd %s && git remote add %s %s" % (dirname,
-                                                   remote_repo.name,
-                                                   remote_repo.url))
-            run("cd %s && git pull --all" % dirname)
+            self.executor("cd %s && git remote add %s %s" % (dirname,
+                                                             remote_repo.name,
+                                                             remote_repo.url))
+            self.executor("cd %s && git pull --all" % dirname)
         return repo
 
     def cleanup(self):
         if self.should_cleanup:
             for repo_dir in self.to_cleanup.values():
                 log.debug("Cleaning up %s", repo_dir)
-                run('rm -rf %s' % repo_dir)
+                self.executor('rm -rf %s' % repo_dir)
 
 
 def run_analysis(repo, filenames=set()):
