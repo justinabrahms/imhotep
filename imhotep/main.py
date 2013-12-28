@@ -217,6 +217,10 @@ if __name__ == '__main__':
     if args.debug:
         log.setLevel(logging.DEBUG)
 
+    if not github_username or not github_password:
+        log.error("You must specify a GitHub username or password.")
+        sys.exit(1)
+
     manager = RepoManager(authenticated=args.authenticated,
                           cache_directory=cache_directory,
                           tools=tools)
