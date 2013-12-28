@@ -1,0 +1,19 @@
+diff --git a/imhotep/diff_parser_test.py b/imhotep/diff_parser_test.py
+index a44a3c6..13e8193 100644
+--- a/imhotep/diff_parser_test.py
++++ b/imhotep/diff_parser_test.py
+@@ -1,5 +1,5 @@
+ from imhotep.diff_parser import DiffContextParser
+-    
++
+ def test_skip_line__minus():
+     dcp = DiffContextParser("")
+     assert dcp.should_skip_line("--- a/.gitignore")
+@@ -11,3 +11,7 @@ def test_skip_line__plus():
+ def test_skip_line__index():
+     dcp = DiffContextParser("")
+     assert dcp.should_skip_line("index 3929bb3..633facf 100644")
++
++def test_skip_line__noskip():
++    dcp = DiffContextParser("")
++    assert not dcp.should_skip_line("+ this is a legit line")

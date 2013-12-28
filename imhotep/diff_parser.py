@@ -33,22 +33,23 @@ class Entry(object):
         self.result_lines.append(line)
 
     def is_dirty(self):
-        return self.result_lines != '' or self.origin_lines != ''
+        return self.result_lines or self.origin_lines
 
 class DiffContextParser:
 
     def __init__(self, diff_text):
         self.diff_text = diff_text
 
-    def new_entry(self):
-        return {
-            'origin_filename': '',
-            'result_filename': '',
-            'origin_lines': [],
-            'result_lines': [],
-            'added_lines': [],
-            'removed_lines': [],
-        }
+    def should_skip_line(self, line):
+        # "index oldsha..newsha permissions" line
+        if re.search(r'index \w+..\w+ \d', line):
+            return True
+        # --- a/.gitignore
+        # +++ b/.gitignore
+        elif re.search('(-|\+){3} (a|b)/.*', line):
+            return True
+        return False
+
 
     def parse(self):
         """
@@ -85,29 +86,15 @@ class DiffContextParser:
                 position = 0
                 continue
 
-            # "index oldsha..newsha permissions" line
-            if re.search(r'index \w+..\w+ \d', line):
+            if self.should_skip_line(line):
                 continue
-            # --- a/.gitignore
-            elif line.startswith('---'):
-                continue # handled in the `diff` line
-            # +++ b/.gitignore
-            elif line.startswith('+++'):
-                continue # handled in the `diff` line
-
 
             header = diff_re.search(line)
             if header is not None:
                 before_line_number = int(header.group('removed_start'))
                 after_line_number = int(header.group('added_start'))
-                if z.is_dirty():
-                    """
-                    We can have multiple headers through the file, so we
-                    increment position on all others.
-                    """
-                    position += 1
+                position += 1
                 continue
-
 
             # removed line
             if line.startswith('-'):

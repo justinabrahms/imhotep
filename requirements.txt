@@ -3,3 +3,7 @@ logilab-common==0.58.3
 pylint==0.26.0
 requests==0.14.2
 wsgiref==0.1.2
+pytest
+pytest-cov
+python-coveralls
+mock

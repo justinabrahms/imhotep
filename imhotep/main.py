@@ -1,46 +1,26 @@
-from collections import defaultdict
 import json
 import logging
 import os
-import re
 from pkg_resources import iter_entry_points
-import requests
-from requests.auth import HTTPBasicAuth
 import subprocess
 import sys
 from tempfile import mkdtemp
 
 from reporters import PrintingReporter, CommitReporter, PRReporter
-from tools import PyLint, JSHint
-from github_parse import DiffContextParser
+from repositories import Repository, AuthenticatedRepository
+from diff_parser import DiffContextParser
+from pull_requests import get_pr_info
+from http import GithubRequester
 
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
 
-class GithubRequester(object):
-    """
-    Object used for issuing authenticated API calls to GitHub.
-    """
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-
-    def get_auth(self):
-        return HTTPBasicAuth(self.username, self.password)
-
-    def get(self, url):
-        return requests.get(url, auth=self.get_auth())
-
-    def post(self, url, payload):
-        return requests.post(
-            url, data=json.dumps(payload),
-            auth=self.get_auth())
-
-
 def run(cmd):
-    return subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
+    log.debug("Running: %s", cmd)
+    return subprocess.Popen(
+        [cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
 
 
 class RepoManager(object):
@@ -49,96 +29,97 @@ class RepoManager(object):
     """
     to_cleanup = {}
 
-    def __init__(self, authenticated=False, cache_directory=None, tools=None):
+    def __init__(self, authenticated=False, cache_directory=None,
+                 tools=None, executor=None):
         self.should_cleanup = cache_directory is None
         self.authenticated = authenticated
         self.cache_directory = cache_directory
         self.tools = tools or []
+        self.executor = executor
 
     def get_repo_class(self):
         if self.authenticated:
             return AuthenticatedRepository
         return Repository
 
-    def clone_repo(self, repo_name):
-        "Clones the given repo and returns the Repository object."
+    def clone_dir(self, repo_name):
         dired_repo_name = repo_name.replace('/', '__')
         if not self.cache_directory:
             dirname = mkdtemp(suffix=dired_repo_name)
         else:
             dirname = os.path.abspath("%s/%s" % (
                 self.cache_directory, dired_repo_name))
+        return dirname
+
+    def clone_repo(self, repo_name, remote_repo):
+        "Clones the given repo and returns the Repository object."
+        dirname = self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
-        repo = klass(repo_name, dirname, tools)
+        repo = klass(repo_name, dirname, self.tools, self.executor)
         if os.path.isdir("%s/.git" % dirname):
             log.debug("Updating %s to %s", repo.download_location, dirname)
-            run("git checkout master && git pull --all")
+            self.executor(
+                "cd %s && git checkout master && git pull --all" % dirname)
         else:
             log.debug("Cloning %s to %s", repo.download_location, dirname)
-            run("git clone %s %s" % (repo.download_location, dirname))
+            self.executor(
+                "git clone %s %s" % (repo.download_location, dirname))
+
+        if remote_repo is not None:
+            log.debug("Pulling remote branch from %s", remote_repo.url)
+            self.executor("cd %s && git remote add %s %s" % (dirname,
+                                                             remote_repo.name,
+                                                             remote_repo.url))
+            self.executor("cd %s && git pull --all" % dirname)
         return repo
 
     def cleanup(self):
         if self.should_cleanup:
             for repo_dir in self.to_cleanup.values():
                 log.debug("Cleaning up %s", repo_dir)
-                run('rm -rf %s' % repo_dir)
-
-
-class Repository(object):
-    """
-    Represents a github repository (both in the abstract and on disk).
-    """
-    def __init__(self, name, loc, tools):
-        self.name = name
-        self.dirname = loc
-        self.tools = tools
-
-    @property
-    def download_location(self):
-        return "git://github.com/%s.git" % self.name
-
-    def __unicode__(self):
-        return self.name
-
-    def get_tools(self):
-        return self.tools
-
-
-class AuthenticatedRepository(Repository):
-    @property
-    def download_location(self):
-        return "git@github.com:%s.git" % self.name
-
-
-def apply_commit(repo, commit, compare_point="HEAD^"):
-    # @@@ This is a security hazard as compare-point is user-passed in
-    # data. Doesn't matter until we wrap this in a service.
-    log.debug("running: cd %s && git checkout %s", repo.dirname, commit)
-    run("cd %s && git checkout %s" % (repo.dirname, commit))
-    return run("cd %s && git diff %s" % (repo.dirname, compare_point))
+                self.executor('rm -rf %s' % repo_dir)
 
 
 def run_analysis(repo, filenames=set()):
     results = {}
-    for tool in repo.get_tools():
+    for tool in repo.tools:
         log.debug("running %s" % tool.__class__.__name__)
         run_results = tool.invoke(repo.dirname, filenames=filenames)
         results.update(run_results)
     return results
 
 
-def get_sha_for_pr(requester, reponame, number):
-    "Returns tuple of (branch_point, pr_head)"
-    resp = requester.get('https://api.github.com/repos/%s/pulls/%s' % (reponame, number))
-    return resp.json['base']['sha'], resp.json['head']['sha']
+def load_config(filename):
+    config = {}
+    if filename is not None:
+        config_path = os.path.abspath(filename)
+        try:
+            with open(config_path) as f:
+                config = json.loads(f.read())
+        except IOError:
+            print "Could not open config file %s" % config_path
+        except ValueError:
+            print "Could not parse config file %s" % config_path
+    return config
 
+
+def load_plugins():
+    tools = []
+    for ep in iter_entry_points(group='imhotep_linters'):
+        klass = ep.load()
+        tools.append(klass(run))
+    return tools
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(
         description="Posts static analysis results to github.")
+    parser.add_argument(
+        '--config-file',
+        default="imhotep_config.json",
+        type=str,
+        help="Configuration file in json.")
     parser.add_argument(
         '--repo_name', required=True,
         help="Github repository name in owner/repo format")
@@ -159,11 +140,9 @@ if __name__ == '__main__':
         help="Will dump debugging output and won't clean up after itself.")
     parser.add_argument(
         '--github-username',
-        required=True,
         help='Github user to post comments as.')
     parser.add_argument(
         '--github-password',
-        required=True,
         help='Github password for the above user.')
     parser.add_argument(
         '--no-post',
@@ -181,31 +160,38 @@ if __name__ == '__main__':
         help="Path to directory to cache the repository",
         type=str,
         required=False)
+
     # parse out repo name
     args = parser.parse_args()
+    config = load_config(args.config_file)
 
     if args.commit == "" and args.pr_number == "":
         print "You must specify a commit or PR number"
         sys.exit(1)
 
-    repo_name = args.repo_name
+    github_username = config.get('username', args.github_username)
+    github_password = config.get('password', args.github_password)
+    cache_directory = config.get('cache-directory', args.cache_directory)
+    repo_name = config.get('repo', args.repo_name)
+
+    pr_num = args.pr_number
     commit = args.commit
     origin_commit = args.origin_commit
     no_post = args.no_post
-    gh_req = GithubRequester(args.github_username, args.github_password)
-    pr_num = args.pr_number
+    remote_repo = None
+    tools = load_plugins()
 
-
-    tools = []
-
-    for ep in iter_entry_points(group='imhotep_linters'):
-        klass = ep.load()
-        tools.append(klass(run))
-
+    gh_req = GithubRequester(github_username, github_password)
 
     if pr_num != '':
-        origin_commit, commit = get_sha_for_pr(gh_req, repo_name, pr_num)
+        pr_info = get_pr_info(gh_req, repo_name, pr_num)
+        origin_commit = pr_info.head_sha
+        commit = pr_info.base_sha
+        if pr_info.has_remote_repo:
+            remote_repo = pr_info.remote_repo
+
         reporter = PRReporter(gh_req, pr_num)
+
     elif commit is not None:
         reporter = CommitReporter(gh_req)
 
@@ -215,19 +201,25 @@ if __name__ == '__main__':
     if args.debug:
         log.setLevel(logging.DEBUG)
 
+    if not github_username or not github_password:
+        log.error("You must specify a GitHub username or password.")
+        sys.exit(1)
+
     manager = RepoManager(authenticated=args.authenticated,
-                          cache_directory=args.cache_directory,
-                          tools=tools)
+                          cache_directory=cache_directory,
+                          tools=tools,
+                          executor=run)
 
     try:
-        repo = manager.clone_repo(repo_name)
-        diff = apply_commit(repo, commit, origin_commit)
+        repo = manager.clone_repo(repo_name, remote_repo=remote_repo)
+        diff = repo.diff_commit(commit, compare_point=origin_commit)
         results = run_analysis(repo, filenames=set(args.filenames or []))
         # Move out to its own thing
-        dcp = DiffContextParser(diff)
-        z = dcp.parse()
+        parser = DiffContextParser(diff)
+        parse_results = parser.parse()
 
-        for entry in z:
+        error_count = 0
+        for entry in parse_results:
             added_lines = [l.number for l in entry.added_lines]
             posMap = {}
             for x in entry.added_lines:
@@ -238,8 +230,12 @@ if __name__ == '__main__':
 
             matching_numbers = set(added_lines).intersection(violating_lines)
             for x in matching_numbers:
-                    reporter.report_line(
-                            repo.name, commit, entry.result_filename, x,
-                            posMap[x], violations['%s' % x])
+                error_count += 1
+                reporter.report_line(
+                    repo.name, commit, entry.result_filename, x,
+                    posMap[x], violations['%s' % x])
+
+        log.info("%d violations.", error_count)
+
     finally:
         manager.cleanup()
