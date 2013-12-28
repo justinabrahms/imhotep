@@ -1,5 +1,6 @@
 from main import load_config, RepoManager
 from repositories import Repository, AuthenticatedRepository
+import mock
 
 
 def test_config_loading():
@@ -15,3 +16,21 @@ def test_authencticated_repo():
 def test_unauthencticated_repo():
     r = RepoManager()
     assert Repository == r.get_repo_class()
+
+
+def test_cleanup_calls_rm():
+    m = mock.Mock()
+    r = RepoManager(executor=m)
+    r.to_cleanup = {'repo': '/tmp/a_dir'}
+    r.cleanup()
+
+    assert m.called_with('rm -rf /tmp/a_dir')
+
+
+def test_cleanup_doesnt_call_rm_with_cache_dir():
+    m = mock.Mock()
+    r = RepoManager(executor=m)
+    r.to_cleanup = {'repo': '/tmp/a_dir'}
+    r.cleanup()
+
+    assert not m.called
