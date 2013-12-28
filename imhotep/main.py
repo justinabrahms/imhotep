@@ -42,14 +42,18 @@ class RepoManager(object):
             return AuthenticatedRepository
         return Repository
 
-    def clone_repo(self, repo_name, remote_repo):
-        "Clones the given repo and returns the Repository object."
+    def clone_dir(self, repo_name):
         dired_repo_name = repo_name.replace('/', '__')
         if not self.cache_directory:
             dirname = mkdtemp(suffix=dired_repo_name)
         else:
             dirname = os.path.abspath("%s/%s" % (
                 self.cache_directory, dired_repo_name))
+        return dirname
+
+    def clone_repo(self, repo_name, remote_repo):
+        "Clones the given repo and returns the Repository object."
+        dirname = self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
         repo = klass(repo_name, dirname, tools, self.executor)

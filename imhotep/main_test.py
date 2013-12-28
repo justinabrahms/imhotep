@@ -34,3 +34,15 @@ def test_cleanup_doesnt_call_rm_with_cache_dir():
     r.cleanup()
 
     assert not m.called
+
+
+def test_clone_dir_nocache():
+    r = RepoManager()
+    val = r.clone_dir('justinabrahms/imhotep')
+    assert '/tmp' in val
+
+
+def test_clone_dir_cached():
+    r = RepoManager(cache_directory="/weeble/wobble/")
+    val = r.clone_dir('justinabrahms/imhotep')
+    assert val.startswith('/weeble/wobble/justinabrahms__imhotep')
