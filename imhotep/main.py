@@ -29,11 +29,13 @@ class RepoManager(object):
     """
     to_cleanup = {}
 
-    def __init__(self, authenticated=False, cache_directory=None, tools=None):
+    def __init__(self, authenticated=False, cache_directory=None,
+                 tools=None, executor=None):
         self.should_cleanup = cache_directory is None
         self.authenticated = authenticated
         self.cache_directory = cache_directory
         self.tools = tools or []
+        self.executor = executor
 
     def get_repo_class(self):
         if self.authenticated:
@@ -50,7 +52,7 @@ class RepoManager(object):
                 self.cache_directory, dired_repo_name))
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
-        repo = klass(repo_name, dirname, tools)
+        repo = klass(repo_name, dirname, tools, self.executor)
         if os.path.isdir("%s/.git" % dirname):
             log.debug("Updating %s to %s", repo.download_location, dirname)
             run("cd %s && git checkout master && git pull --all" % dirname)
@@ -71,14 +73,6 @@ class RepoManager(object):
             for repo_dir in self.to_cleanup.values():
                 log.debug("Cleaning up %s", repo_dir)
                 run('rm -rf %s' % repo_dir)
-
-
-def apply_commit(repo, commit, compare_point="HEAD^"):
-    # @@@ This is a security hazard as compare-point is user-passed in
-    # data. Doesn't matter until we wrap this in a service.
-    run("cd %s && git checkout %s" % (repo.dirname, commit))
-    return run("cd %s && git diff %s" % (repo.dirname, compare_point))
-
 
 def run_analysis(repo, filenames=set()):
     results = {}
@@ -204,11 +198,13 @@ if __name__ == '__main__':
 
     manager = RepoManager(authenticated=args.authenticated,
                           cache_directory=cache_directory,
-                          tools=tools)
+                          tools=tools,
+                          repo=repo_name,
+                          executor=run)
 
     try:
         repo = manager.clone_repo(repo_name, remote_repo=remote_repo)
-        diff = apply_commit(repo, commit, origin_commit)
+        diff = repo.diff_commit(commit, compare_point=origin_commit)
         results = run_analysis(repo, filenames=set(args.filenames or []))
         # Move out to its own thing
         parser = DiffContextParser(diff)
