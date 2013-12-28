@@ -1,8 +1,6 @@
-from collections import defaultdict
 import json
 import logging
 import os
-import re
 from pkg_resources import iter_entry_points
 import requests
 from requests.auth import HTTPBasicAuth
@@ -12,7 +10,6 @@ from tempfile import mkdtemp
 
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository
-from tools import PyLint, JSHint
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
 
@@ -43,7 +40,8 @@ class GithubRequester(object):
 
 def run(cmd):
     log.debug("Running: %s", cmd)
-    return subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
+    return subprocess.Popen(
+        [cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
 
 
 class RepoManager(object):
@@ -94,7 +92,6 @@ class RepoManager(object):
             for repo_dir in self.to_cleanup.values():
                 log.debug("Cleaning up %s", repo_dir)
                 run('rm -rf %s' % repo_dir)
-
 
 
 def apply_commit(repo, commit, compare_point="HEAD^"):
@@ -249,7 +246,7 @@ if __name__ == '__main__':
                     repo.name, commit, entry.result_filename, x,
                     posMap[x], violations['%s' % x])
 
-        log.info("%d violations.", error_count);
+        log.info("%d violations.", error_count)
 
     finally:
         manager.cleanup()
