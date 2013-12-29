@@ -1,0 +1,94 @@
+import mock
+import re
+
+from tools import Tool
+from testing_utils import calls_matching_re
+
+
+class TestTool(Tool):
+    def process_line(self, dirname, line):
+        return None
+
+    def get_file_extensions(self):
+        return [".exe"]
+
+    def get_command(self, dirname):
+        return "example-cmd"
+
+
+def test_find_searches_dirname():
+    m = mock.Mock()
+    m.return_value = ""
+    t = TestTool(m)
+    t.invoke('/woobie/')
+
+    assert len(calls_matching_re(
+        m, re.compile(r'find /woobie/'))) > 0
+
+
+def test_find_includes_extension():
+    m = mock.Mock()
+    m.return_value = ""
+    t = TestTool(m)
+    t.invoke('/woobie/')
+
+    assert len(calls_matching_re(
+        m, re.compile(r'-name "\*.exe"'))) > 0
+
+
+def test_find_includes_multiple_extensions_with_dash_o():
+    m = mock.Mock()
+    m.return_value = ""
+    t = TestTool(m)
+    t.get_file_extensions = lambda: ['.a', '.b']
+    t.invoke('/woobie/')
+
+    assert len(calls_matching_re(
+        m, re.compile(r'-name "\*.a" -o -name "\*.b"'))) > 0
+
+
+def test_invoke_runs_command():
+    m = mock.Mock()
+    m.return_value = ""
+    t = TestTool(m)
+    t.invoke('/woobie/')
+
+    assert len(calls_matching_re(
+        m, re.compile("example-cmd"))) == 1
+
+
+def test_calls_process_line_for_each_line():
+    m = mock.Mock()
+    m.return_value = "1\n2\n3"
+    t = TestTool(m)
+    process_mock = mock.Mock()
+    process_mock.return_value = None
+    t.process_line = process_mock
+    t.invoke('/woobie/')
+
+    assert process_mock.call_count == 3
+
+
+def test_ignores_none_results_from_process_line():
+    m = mock.Mock()
+    m.return_value = ""
+    process_mock = mock.Mock()
+    process_mock.return_value = None
+    t = TestTool(m)
+    t.process_line = process_mock
+    retval = t.invoke('/woobie/')
+
+    assert 0 == len(retval.keys())
+
+
+def test_appends_process_line_results_to_results():
+    m = mock.Mock()
+    m.return_value = ""
+    process_mock = mock.Mock()
+    process_mock.return_value = (1, 2, 3)
+    t = TestTool(m)
+    t.process_line = process_mock
+    retval = t.invoke('/woobie/')
+
+    assert 1 == len(retval.keys())
+    assert retval[1][2][0] == 3
