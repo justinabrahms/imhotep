@@ -5,6 +5,7 @@ import mock
 from main import load_config, RepoManager, run_analysis
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
 from pull_requests import Remote
+from testing_utils import calls_matching_re
 
 repo_name = 'justinabrahms/imhotep'
 
@@ -74,17 +75,6 @@ def test_updates_if_existing_repo():
         r.clone_repo(repo_name, None)
 
     assert len(calls_matching_re(m, finder)) == 0, "Shouldn't git clone"
-
-
-def calls_matching_re(mockObj, regex):
-    matches = []
-    for call in mockObj.call_args_list:
-        cmd = call[0][0]
-        match = regex.search(cmd)
-        if match:
-            matches.append(call)
-
-    return matches
 
 
 def test_clones_if_no_existing_repo():
