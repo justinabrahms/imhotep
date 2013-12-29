@@ -85,10 +85,22 @@ def test_appends_process_line_results_to_results():
     m = mock.Mock()
     m.return_value = ""
     process_mock = mock.Mock()
-    process_mock.return_value = (1, 2, 3)
+    process_mock.return_value = ('filename', 2, 3)
     t = TestTool(m)
     t.process_line = process_mock
     retval = t.invoke('/woobie/')
 
     assert 1 == len(retval.keys())
-    assert retval[1][2][0] == 3
+    assert retval['filename'][2][0] == 3
+
+
+def test_invoke_removes_dirname_prefix():
+    m = mock.Mock()
+    m.return_value = ""
+    process_mock = mock.Mock()
+    process_mock.return_value = ('/my/full/path/and/extras', 2, 3)
+    t = TestTool(m)
+    t.process_line = process_mock
+    retval = t.invoke('/my/full/path')
+
+    assert 'and/extras' in retval.keys()

@@ -7,33 +7,16 @@ log = logging.getLogger(__name__)
 
 
 class Tool(object):
+    """
+    Tool represents a program that runs over source code. It returns a nested
+    dictionary structure like:
+
+      {'relative_filename': {'line_number': [error1, error2]}}
+      eg: {'imhotep/main.py': {'103': ['line too long']}}
+    """
     def __init__(self, command_executor, filenames=set()):
         self.executor = command_executor
         self.filenames = filenames
-
-    def process_line(self, dirname, line):
-        """
-        Processes a line return a 3-element tuple representing (filename,
-        line_number, error_messages) or None to indicate no error.
-
-        :param: dirname - directory the code is running in
-        """
-        raise NotImplementedError()
-
-    def get_file_extensions(self):
-        """
-        Returns a list of file extensions this tool should run against.
-
-        eg: ['.py', '.js']
-        """
-        raise NotImplementedError()
-
-    def get_command(self, dirname):
-        """
-        Returns the command to run for linting. It is piped a list of files to
-        run on over stdin.
-        """
-        raise NotImplementedError()
 
     def invoke(self, dirname, filenames=set()):
         """
@@ -61,8 +44,34 @@ class Tool(object):
             output = self.process_line(dirname, line)
             if output is not None:
                 filename, lineno, messages = output
+                if filename.startswith(dirname):
+                    filename = filename[len(dirname)+1:]
                 retval[filename][lineno].append(messages)
         return retval
+
+    def process_line(self, dirname, line):
+        """
+        Processes a line return a 3-element tuple representing (filename,
+        line_number, error_messages) or None to indicate no error.
+
+        :param: dirname - directory the code is running in
+        """
+        raise NotImplementedError()
+
+    def get_file_extensions(self):
+        """
+        Returns a list of file extensions this tool should run against.
+
+        eg: ['.py', '.js']
+        """
+        raise NotImplementedError()
+
+    def get_command(self, dirname):
+        """
+        Returns the command to run for linting. It is piped a list of files to
+        run on over stdin.
+        """
+        raise NotImplementedError()
 
 
 class JSHint(Tool):
@@ -102,7 +111,13 @@ class PyLint(Tool):
             if len(self.filenames) != 0:
                 if match.group('filename') not in self.filenames:
                     return
-            return match.groups()
+            filename, line, messages = match.groups()
+            # If you run pylint on /foo/bar/baz and you are in the /foo/bar
+            # directory, it will spit out paths that look like: ./baz To fix
+            # this, we run it through `os.path.abspath` which will give it a
+            # full, absolute path.
+            filename = os.path.abspath(filename)
+            return filename, line, messages
 
     def get_command(self, dirname):
         cmd = 'pylint --output-format=parseable -rn'
@@ -110,34 +125,3 @@ class PyLint(Tool):
             cmd += " --rcfile=%s" % os.path.join(
                 dirname, self.pylintrc_filename)
         return cmd
-
-
-    # def invoke(self, dirname, filenames=set()):
-    #     to_return = defaultdict(lambda: defaultdict(list))
-    #     log.debug("Running pylint on %s", dirname)
-    #     cmd = 'find %s -name "*.py" | ' \
-    #           'xargs pylint --output-format=parseable -rn'
-
-    #     if os.path.exists(os.path.join(dirname, self.pylintrc_filename)):
-    #         cmd += " --rcfile=%s" % os.path.join(
-    #             dirname, self.pylintrc_filename)
-    #     result = self.executor(cmd % dirname)
-
-
-    #     # pylint is stupid, this should fix relative path linting
-    #     # if repo is checked out relative to where imhotep is called.
-    #     if os.path.abspath('.') in dirname:
-    #         dirname = dirname[len(os.path.abspath('.'))+1:]
-
-    #     # splitting based on newline + dirname and trailing slash will make
-    #     # beginning of line until first colon the relative filename. It also
-    #     # has the nice side effect of allowing us multi-line output from the
-    #     # tool without things breaking.
-    #     for line in result.split("\n%s/" % dirname):
-    #         if len(line) == 0:
-    #             continue
-    #         filename, line_num, error = line.split(':', 2)
-    #         if len(filenames) != 0 and filename not in filenames:
-    #             continue
-    #         to_return[filename][line_num].append(error)
-    #     return to_return
