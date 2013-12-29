@@ -98,9 +98,9 @@ def load_config(filename):
             with open(config_path) as f:
                 config = json.loads(f.read())
         except IOError:
-            print "Could not open config file %s" % config_path
+            log.error("Could not open config file %s", config_path)
         except ValueError:
-            print "Could not parse config file %s" % config_path
+            log.error("Could not parse config file %s", config_path)
     return config
 
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     config = load_config(args.config_file)
 
     if args.commit == "" and args.pr_number == "":
-        print "You must specify a commit or PR number"
+        log.error("You must specify a commit or PR number")
         sys.exit(1)
 
     github_username = config.get('username', args.github_username)
@@ -226,7 +226,6 @@ if __name__ == '__main__':
                 posMap[x.number] = x.position
 
             violations = results.get(entry.result_filename, {})
-            print "violations: %s" % violations
             violating_lines = [int(l) for l in violations.keys()]
 
             matching_numbers = set(added_lines).intersection(violating_lines)
