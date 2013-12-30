@@ -17,10 +17,10 @@ logging.basicConfig()
 log = logging.getLogger(__name__)
 
 
-def run(cmd):
+def run(cmd, cwd='.'):
     log.debug("Running: %s", cmd)
     return subprocess.Popen(
-        [cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
+        [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd).communicate()[0]
 
 
 class RepoManager(object):
