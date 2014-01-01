@@ -17,10 +17,10 @@ logging.basicConfig()
 log = logging.getLogger(__name__)
 
 
-def run(cmd):
+def run(cmd, cwd='.'):
     log.debug("Running: %s", cmd)
     return subprocess.Popen(
-        [cmd], stdout=subprocess.PIPE, shell=True).communicate()[0]
+        [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd).communicate()[0]
 
 
 class RepoManager(object):
@@ -98,9 +98,9 @@ def load_config(filename):
             with open(config_path) as f:
                 config = json.loads(f.read())
         except IOError:
-            print "Could not open config file %s" % config_path
+            log.error("Could not open config file %s", config_path)
         except ValueError:
-            print "Could not parse config file %s" % config_path
+            log.error("Could not parse config file %s", config_path)
     return config
 
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     config = load_config(args.config_file)
 
     if args.commit == "" and args.pr_number == "":
-        print "You must specify a commit or PR number"
+        log.error("You must specify a commit or PR number")
         sys.exit(1)
 
     github_username = config.get('username', args.github_username)
@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
     gh_req = GithubRequester(github_username, github_password)
 
-    if pr_num != '':
+    if pr_num is not None:
         pr_info = get_pr_info(gh_req, repo_name, pr_num)
         origin_commit = pr_info.head_sha
         commit = pr_info.base_sha
