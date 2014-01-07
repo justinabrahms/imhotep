@@ -97,6 +97,29 @@ class JSHint(Tool):
         return cmd
 
 
+class JSL(Tool):
+    response_format = re.compile(
+        r'^(?P<type>[WE]) '
+        r'(?P<filename>.*?) L(?P<line_number>\d+): (?P<message>.*)$')
+
+    def process_line(self, dirname, line):
+        match = self.response_format.search(line)
+
+        if match is None:
+            return
+
+        message = '%s: %s' % (match.group('type'), match.group('message'))
+        filename = match.group('filename')
+
+        return filename[len(dirname) + 1:], match.group('line_number'), message
+
+    def get_file_extensions(self):
+        return ['.js']
+
+    def get_command(self, dirname):
+        return "jsl"
+
+
 class PyLint(Tool):
     response_format = re.compile(r'(?P<filename>.*):(?P<line_num>\d+):'
                                  '(?P<message>.*)')
