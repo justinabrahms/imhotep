@@ -12,7 +12,7 @@ setup(
     requires=['requests'],
     entry_points={
         'imhotep_linters': [
-            '.js = tools:JSHint',
+            '.js = tools:JSL',
             '.py = tools:PyLint [pylint]'
         ],
     },
