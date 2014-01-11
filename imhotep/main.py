@@ -185,8 +185,8 @@ if __name__ == '__main__':
 
     if pr_num is not None:
         pr_info = get_pr_info(gh_req, repo_name, pr_num)
-        origin_commit = pr_info.head_sha
-        commit = pr_info.base_sha
+        origin_commit = pr_info.base_sha
+        commit = pr_info.head_sha
         if pr_info.has_remote_repo:
             remote_repo = pr_info.remote_repo
 
