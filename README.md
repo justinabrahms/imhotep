@@ -99,6 +99,41 @@ There is currently support for 2 linters: PyLint and JSHint. If it
 finds violations, it will post those violations to GitHub. New linting
 tools are encouraged!
 
+## Plugins
+
+Imhotep supports adding linters through a plugin API based around
+Python's setuptools entrypoints. This means that plugins can live as
+separate Python packages which are installable alongside imhotep.
+
+To write your own tool, subclass [the Tool
+class](https://github.com/justinabrahms/imhotep/blob/master/imhotep/tools.py)
+and override the `process_line`, `get_file_extensions`, and
+`get_command` methods. If you need greater control over how the tool
+is run, you can override the `invoke` method which gives you maximal
+control over how the tools are run.
+
+To make your plugin discoverable, you need to add an `entry_points`
+stanza to your `setup.py`. It looks like this.
+
+```python
+setup(
+  # ...
+  entry_points={
+    'imhotep_linter': [
+      '.py = path.to.module:ToolClassName'
+    ]
+  }
+  # ...
+)
+```
+
+The key pieces of this are the name of the entrypoint which **must**
+be `imhotep_linter`. This is how we know where to find the
+plugins. The list that follows it is a list of strings that map file
+extensions to a tool that knows how to lint them. So for the entry
+above, we'll do something like `from path.to.module import
+ToolClassName` and run that on all `.py` files in the repository.
+
 ## What's with the name?
 
 Imhotep, the first Egyptian architect, is known as "the one who comes
