@@ -134,6 +134,10 @@ extensions to a tool that knows how to lint them. So for the entry
 above, we'll do something like `from path.to.module import
 ToolClassName` and run that on all `.py` files in the repository.
 
+You can find a working example of a `setup.py` file in the
+[imhotep_pep8
+repository](https://github.com/justinabrahms/imhotep_pep8/blob/master/setup.py).
+
 ## What's with the name?
 
 Imhotep, the first Egyptian architect, is known as "the one who comes
