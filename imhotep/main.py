@@ -194,6 +194,16 @@ class Imhotep(object):
         finally:
             self.manager.cleanup()
 
+def gen_imhotep(**params):
+    req = GithubRequester(params['github_username'],
+                          params['github_password'])
+
+    manager = RepoManager(authenticated=params['authenticated'],
+                  cache_directory=params['cache_directory'],
+                  tools=load_plugins(),
+                  executor=run)
+    return Imhotep(requester=req, repo_manager=manager, **params)
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(
@@ -250,20 +260,13 @@ if __name__ == '__main__':
     params.update(**load_config(args.config_file))
 
     try:
-        req = GithubRequester(params['github_username'],
-                              params['github_password'])
+        imhotep = gen_imhotep(**params)
     except NoGithubCredentials:
         log.error("You must specify a GitHub username or password.")
         sys.exit(1)
-
-    manager = RepoManager(authenticated=params['authenticated'],
-                  cache_directory=params['cache_directory'],
-                  tools=load_plugins(),
-                  executor=run)
-
-
-    try:
-        Imhotep(requester=req, repo_manager=manager, **params).invoke()
     except NoCommitInfo:
         log.error("You must specify a commit or PR number")
         sys.exit(1)
+
+    imhotep.run()
+
