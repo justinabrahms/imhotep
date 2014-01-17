@@ -10,7 +10,7 @@ from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
-from http import GithubRequester
+from http import GithubRequester, NoGithubCredentials
 
 
 logging.basicConfig()
@@ -112,15 +112,14 @@ def load_plugins():
     return tools
 
 class Imhotep(object):
-    def __init__(self, github_username=None, github_password=None,
+    def __init__(self, requester=None,
                  cache_directory=None, repo_name=None, pr_number=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
                  authenticated=None, filenames=None):
 
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
-        self.github_password = github_password
-        self.github_username = github_username
-        self.github_password = github_password
+        self.requester = requester
+        
         self.cache_directory = cache_directory
         self.repo_name = repo_name
         self.pr_number = pr_number
@@ -131,12 +130,8 @@ class Imhotep(object):
         self.authenticated = authenticated
         self.filenames = filenames
 
-        if not self.github_username or not self.github_password:
-            raise NoGithubCredentials()
-        
         if self.commit == "" and self.pr_number == "":
             raise NoCommitInfo()
-
 
     def invoke(self):
         pr_num = self.pr_number
@@ -146,19 +141,17 @@ class Imhotep(object):
         remote_repo = None
         tools = load_plugins()
 
-        gh_req = GithubRequester(self.github_username, self.github_password)
-
         if pr_num is not None:
-            pr_info = get_pr_info(gh_req, self.repo_name, pr_num)
+            pr_info = get_pr_info(self.requester, self.repo_name, pr_num)
             commit = pr_info.base_sha
             origin_commit = pr_info.head_sha
             if pr_info.has_remote_repo:
                 remote_repo = pr_info.remote_repo
 
-            reporter = PRReporter(gh_req, pr_num)
+            reporter = PRReporter(self.requester, pr_num)
 
         elif commit is not None:
-            reporter = CommitReporter(gh_req)
+            reporter = CommitReporter(self.requester)
 
         if no_post:
             reporter = PrintingReporter()
@@ -257,10 +250,14 @@ if __name__ == '__main__':
     params.update(**load_config(args.config_file))
 
     try:
-        Imhotep(**params).invoke()
-    except NoCommitInfo:
-        log.error("You must specify a commit or PR number")
-        sys.exit(1)
+        req = GithubRequester(params['github_username'],
+                              params['github_password'])
     except NoGithubCredentials:
         log.error("You must specify a GitHub username or password.")
+        sys.exit(1)
+
+    try:
+        Imhotep(requester=req, **params).invoke()
+    except NoCommitInfo:
+        log.error("You must specify a commit or PR number")
         sys.exit(1)
