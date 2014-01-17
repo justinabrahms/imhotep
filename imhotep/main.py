@@ -150,8 +150,8 @@ class Imhotep(object):
 
         if pr_num is not None:
             pr_info = get_pr_info(gh_req, self.repo_name, pr_num)
-            commit = pr_info.head_sha
-            origin_commit = pr_info.base_sha
+            commit = pr_info.base_sha
+            origin_commit = pr_info.head_sha
             if pr_info.has_remote_repo:
                 remote_repo = pr_info.remote_repo
 
@@ -173,7 +173,7 @@ class Imhotep(object):
 
         try:
             repo = manager.clone_repo(self.repo_name, remote_repo=remote_repo)
-            diff = repo.diff_commit(origin_commit, compare_point=commit)
+            diff = repo.diff_commit(commit, compare_point=origin_commit)
             results = run_analysis(repo, filenames=set(self.filenames or []))
             # Move out to its own thing
             parser = DiffContextParser(diff)
