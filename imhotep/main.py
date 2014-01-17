@@ -112,15 +112,15 @@ def load_plugins():
     return tools
 
 class Imhotep(object):
-    def __init__(self, requester=None,
-                 cache_directory=None, repo_name=None, pr_number=None,
+    def __init__(self, requester=None, repo_manager=None,
+                 repo_name=None, pr_number=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
-                 authenticated=None, filenames=None):
+                 filenames=None):
 
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
         self.requester = requester
-        
-        self.cache_directory = cache_directory
+        self.manager = repo_manager
+
         self.repo_name = repo_name
         self.pr_number = pr_number
         self.commit = commit
@@ -139,7 +139,6 @@ class Imhotep(object):
         origin_commit = self.origin_commit
         no_post = self.no_post
         remote_repo = None
-        tools = load_plugins()
 
         if pr_num is not None:
             pr_info = get_pr_info(self.requester, self.repo_name, pr_num)
@@ -159,13 +158,9 @@ class Imhotep(object):
         if self.debug:
             log.setLevel(logging.DEBUG)
 
-        manager = RepoManager(authenticated=self.authenticated,
-                              cache_directory=self.cache_directory,
-                              tools=tools,
-                              executor=run)
 
         try:
-            repo = manager.clone_repo(self.repo_name, remote_repo=remote_repo)
+            repo = self.manager.clone_repo(self.repo_name, remote_repo=remote_repo)
             diff = repo.diff_commit(commit, compare_point=origin_commit)
             results = run_analysis(repo, filenames=set(self.filenames or []))
             # Move out to its own thing
@@ -192,7 +187,7 @@ class Imhotep(object):
             log.info("%d violations.", error_count)
 
         finally:
-            manager.cleanup()
+            self.manager.cleanup()
 
 if __name__ == '__main__':
     import argparse
@@ -256,8 +251,14 @@ if __name__ == '__main__':
         log.error("You must specify a GitHub username or password.")
         sys.exit(1)
 
+    manager = RepoManager(authenticated=params['authenticated'],
+                  cache_directory=params['cache_directory'],
+                  tools=load_plugins(),
+                  executor=run)
+
+
     try:
-        Imhotep(requester=req, **params).invoke()
+        Imhotep(requester=req, repo_manager=manager, **params).invoke()
     except NoCommitInfo:
         log.error("You must specify a commit or PR number")
         sys.exit(1)
