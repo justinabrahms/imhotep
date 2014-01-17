@@ -114,6 +114,9 @@ def load_plugins():
         tools.append(klass(run))
     return tools
 
+class NoCommitInfo(Exception):
+    pass
+
 class Imhotep(object):
     def __init__(self, requester=None, repo_manager=None,
                  repo_name=None, pr_number=None,
@@ -131,7 +134,7 @@ class Imhotep(object):
         self.debug = debug
         self.filenames = filenames
 
-        if self.commit == "" and self.pr_number == "":
+        if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
 
     def get_reporter(self):
@@ -141,7 +144,6 @@ class Imhotep(object):
             return PRReporter(self.requester, self.pr_number)
         elif self.commit is not None:
             return CommitReporter(self.requester)
-        raise NoReporterFound()
 
     def invoke(self):
         pr_num = self.pr_number
