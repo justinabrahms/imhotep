@@ -16,6 +16,9 @@ from http import GithubRequester
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
+class UnknownTools(Exception):
+    def __init__(self, known):
+        self.known = known
 
 def run(cmd, cwd='.'):
     log.debug("Running: %s", cmd)
@@ -111,6 +114,23 @@ def load_plugins():
         tools.append(klass(run))
     return tools
 
+
+def get_tools(whitelist, known_plugins):
+    """
+    Filter all known plugins by a whitelist specified. If the whitelist is
+    empty, default to all plugins.
+    """
+    getpath = lambda x: "%s:%s" % (x.__module__, x.__class__.__name__)
+
+    tools = [x for x in known_plugins if getpath(x) in whitelist]
+
+    if not tools:
+        if whitelist:
+            raise UnknownTools(map(getpath, known_plugins))
+        tools = known_plugins
+    return tools
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(
@@ -161,9 +181,21 @@ if __name__ == '__main__':
         type=str,
         required=False)
 
+    parser.add_argument(
+        '--linter',
+        help="Path to linters to run, e.g. 'imhotep.tools:PyLint'",
+        type=str,
+        nargs="+",
+        default=[],
+        required=False)
+
+
     # parse out repo name
     args = parser.parse_args()
     config = load_config(args.config_file)
+
+    if args.debug:
+        log.setLevel(logging.DEBUG)
 
     if args.commit == "" and args.pr_number == "":
         log.error("You must specify a commit or PR number")
@@ -179,7 +211,15 @@ if __name__ == '__main__':
     origin_commit = args.origin_commit
     no_post = args.no_post
     remote_repo = None
-    tools = load_plugins()
+    plugins = load_plugins()
+
+    try:
+        tools = get_tools(args.linter, plugins)
+    except UnknownTools as e:
+        log.error("Didn't find any of the specified linters.")
+        log.error("Known linters: %s", ', '.join(e.known))
+        sys.exit(1)
+
 
     gh_req = GithubRequester(github_username, github_password)
 
@@ -197,9 +237,6 @@ if __name__ == '__main__':
 
     if no_post:
         reporter = PrintingReporter()
-
-    if args.debug:
-        log.setLevel(logging.DEBUG)
 
     if not github_username or not github_password:
         log.error("You must specify a GitHub username or password.")

@@ -2,7 +2,7 @@ import re
 
 import mock
 
-from main import load_config, RepoManager, run_analysis
+from main import load_config, RepoManager, run_analysis, get_tools, UnknownTools
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
 from pull_requests import Remote
 from testing_utils import calls_matching_re
@@ -130,3 +130,28 @@ def test_tools_errors_on_no_tools():
         assert False, "Should error if no tools are given"
     except ToolsNotFound:
         pass
+
+
+class Thing1(object):
+    pass
+
+
+class Thing2(object):
+    pass
+
+
+def test_plugin_filtering_throws_if_unfound():
+    try:
+        get_tools('unknown', [Thing1()])
+        assert False, "Should have thrown an UnknownTools exception"
+    except UnknownTools:
+        pass
+
+def test_plugin_filtering_defaults_to_all():
+    plugins = [Thing1(), Thing2()]
+    assert plugins == get_tools([], plugins)
+
+def test_plugin_filtering_returns_subset_if_found():
+    t1 = Thing1()
+    plugins = [t1, Thing2()]
+    assert [t1] == get_tools(['imhotep.main_test:Thing1'], plugins)
