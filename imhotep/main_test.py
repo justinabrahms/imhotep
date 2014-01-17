@@ -2,7 +2,9 @@ import re
 
 import mock
 
-from main import load_config, RepoManager, run_analysis, get_tools, UnknownTools
+from main import (load_config, RepoManager, run_analysis,get_tools,
+                  UnknownTools, Imhotep, NoCommitInfo)
+from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
 from pull_requests import Remote
 from testing_utils import calls_matching_re
@@ -130,6 +132,29 @@ def test_tools_errors_on_no_tools():
         assert False, "Should error if no tools are given"
     except ToolsNotFound:
         pass
+
+
+def test_imhotep_instantiation__error_without_commit_info():
+    try:
+        Imhotep()
+        assert False, "Expected a NoCommitInfo exception."
+    except NoCommitInfo:
+        pass
+
+
+def test_reporter__printing():
+    i = Imhotep(no_post=True, commit="asdf")
+    assert type(i.get_reporter()) == PrintingReporter
+
+
+def test_reporter__pr():
+    i = Imhotep(pr_number=1)
+    assert type(i.get_reporter()) == PRReporter
+
+
+def test_reporter__commit():
+    i = Imhotep(commit='asdf')
+    assert type(i.get_reporter()) == CommitReporter
 
 
 class Thing1(object):
