@@ -99,6 +99,13 @@ There is currently support for 2 linters: PyLint and JSHint. If it
 finds violations, it will post those violations to GitHub. New linting
 tools are encouraged!
 
+By default, imhotep runs all plugins it can find on your source
+code. If you'd like to only run a subset of linters, you should
+specify the `--linter` directive with a dotted path to the module. An
+example of this is `imhotep.tools:PyLint` or
+`imhotep_pep8.plugin:Pep8Linter`. If you want to specify multiple
+tools, just pass multiple things to the `--linter` flag.
+
 ## What's with the name?
 
 Imhotep, the first Egyptian architect, is known as "the one who comes

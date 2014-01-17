@@ -2,7 +2,8 @@ import re
 
 import mock
 
-from main import load_config, RepoManager, run_analysis, Imhotep, NoCommitInfo
+from main import (load_config, RepoManager, run_analysis,get_tools,
+                  UnknownTools, Imhotep, NoCommitInfo)
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
 from pull_requests import Remote
@@ -154,3 +155,28 @@ def test_reporter__pr():
 def test_reporter__commit():
     i = Imhotep(commit='asdf')
     assert type(i.get_reporter()) == CommitReporter
+
+
+class Thing1(object):
+    pass
+
+
+class Thing2(object):
+    pass
+
+
+def test_plugin_filtering_throws_if_unfound():
+    try:
+        get_tools('unknown', [Thing1()])
+        assert False, "Should have thrown an UnknownTools exception"
+    except UnknownTools:
+        pass
+
+def test_plugin_filtering_defaults_to_all():
+    plugins = [Thing1(), Thing2()]
+    assert plugins == get_tools([], plugins)
+
+def test_plugin_filtering_returns_subset_if_found():
+    t1 = Thing1()
+    plugins = [t1, Thing2()]
+    assert [t1] == get_tools(['imhotep.main_test:Thing1'], plugins)

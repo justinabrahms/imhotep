@@ -16,6 +16,9 @@ from http import GithubRequester, NoGithubCredentials
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
+class UnknownTools(Exception):
+    def __init__(self, known):
+        self.known = known
 
 def run(cmd, cwd='.'):
     log.debug("Running: %s", cmd)
@@ -198,11 +201,30 @@ def gen_imhotep(**params):
     req = GithubRequester(params['github_username'],
                           params['github_password'])
 
+
+    plugins = load_plugins()
+    tools = get_tools(params['linter'], plugins)
+    
     manager = RepoManager(authenticated=params['authenticated'],
                   cache_directory=params['cache_directory'],
                   tools=load_plugins(),
                   executor=run)
     return Imhotep(requester=req, repo_manager=manager, **params)
+
+def get_tools(whitelist, known_plugins):
+    """
+    Filter all known plugins by a whitelist specified. If the whitelist is
+    empty, default to all plugins.
+    """
+    getpath = lambda x: "%s:%s" % (x.__module__, x.__class__.__name__)
+
+    tools = [x for x in known_plugins if getpath(x) in whitelist]
+
+    if not tools:
+        if whitelist:
+            raise UnknownTools(map(getpath, known_plugins))
+        tools = known_plugins
+    return tools
 
 if __name__ == '__main__':
     import argparse
@@ -254,6 +276,14 @@ if __name__ == '__main__':
         type=str,
         required=False)
 
+    parser.add_argument(
+        '--linter',
+        help="Path to linters to run, e.g. 'imhotep.tools:PyLint'",
+        type=str,
+        nargs="+",
+        default=[],
+        required=False)
+
     # parse out repo name
     args = parser.parse_args()
     params = args.__dict__
@@ -267,6 +297,9 @@ if __name__ == '__main__':
     except NoCommitInfo:
         log.error("You must specify a commit or PR number")
         sys.exit(1)
+    except UnknownTools as e:
+        log.error("Didn't find any of the specified linters.")
+        log.error("Known linters: %s", ', '.join(e.known))
+        sys.exit(1)
 
     imhotep.run()
-
