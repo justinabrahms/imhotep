@@ -23,6 +23,9 @@ def run(cmd, cwd='.'):
         [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd).communicate()[0]
 
 
+class NoReporterFound(Exception):
+    pass
+
 class RepoManager(object):
     """
     Manages creation and deletion of `Repository` objects.
@@ -116,7 +119,6 @@ class Imhotep(object):
                  repo_name=None, pr_number=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
                  filenames=None):
-
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
         self.requester = requester
         self.manager = repo_manager
@@ -127,11 +129,19 @@ class Imhotep(object):
         self.origin_commit = origin_commit
         self.no_post = no_post
         self.debug = debug
-        self.authenticated = authenticated
         self.filenames = filenames
 
         if self.commit == "" and self.pr_number == "":
             raise NoCommitInfo()
+
+    def get_reporter(self):
+        if self.no_post:
+            return PrintingReporter()
+        if self.pr_number:
+            return PRReporter(self.requester, self.pr_number)
+        elif self.commit is not None:
+            return CommitReporter(self.requester)
+        raise NoReporterFound()
 
     def invoke(self):
         pr_num = self.pr_number
@@ -140,24 +150,17 @@ class Imhotep(object):
         no_post = self.no_post
         remote_repo = None
 
-        if pr_num is not None:
-            pr_info = get_pr_info(self.requester, self.repo_name, pr_num)
+        if self.pr_number is not None:
+            pr_info = get_pr_info(self.requester, self.repo_name, self.pr_number)
             commit = pr_info.base_sha
             origin_commit = pr_info.head_sha
             if pr_info.has_remote_repo:
                 remote_repo = pr_info.remote_repo
 
-            reporter = PRReporter(self.requester, pr_num)
-
-        elif commit is not None:
-            reporter = CommitReporter(self.requester)
-
-        if no_post:
-            reporter = PrintingReporter()
+        reporter = self.get_reporter()
 
         if self.debug:
             log.setLevel(logging.DEBUG)
-
 
         try:
             repo = self.manager.clone_repo(self.repo_name, remote_repo=remote_repo)
