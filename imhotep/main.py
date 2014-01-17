@@ -111,6 +111,96 @@ def load_plugins():
         tools.append(klass(run))
     return tools
 
+class Imhotep(object):
+    def __init__(self, github_username=None, github_password=None,
+                 cache_directory=None, repo_name=None, pr_number=None,
+                 commit=None, origin_commit=None, no_post=None, debug=None,
+                 authenticated=None, filenames=None):
+
+        # TODO(justinabrahms): This is a sprawling API. Tighten it up.
+        self.github_password = github_password
+        self.github_username = github_username
+        self.github_password = github_password
+        self.cache_directory = cache_directory
+        self.repo_name = repo_name
+        self.pr_number = pr_number
+        self.commit = commit
+        self.origin_commit = origin_commit
+        self.no_post = no_post
+        self.debug = debug
+        self.authenticated = authenticated
+        self.filenames = filenames
+
+        if not self.github_username or not self.github_password:
+            raise NoGithubCredentials()
+        
+        if self.commit == "" and self.pr_number == "":
+            raise NoCommitInfo()
+
+
+    def invoke(self):
+        pr_num = self.pr_number
+        commit = self.commit
+        origin_commit = self.origin_commit
+        no_post = self.no_post
+        remote_repo = None
+        tools = load_plugins()
+
+        gh_req = GithubRequester(self.github_username, self.github_password)
+
+        if pr_num is not None:
+            pr_info = get_pr_info(gh_req, self.repo_name, pr_num)
+            commit = pr_info.head_sha
+            origin_commit = pr_info.base_sha
+            if pr_info.has_remote_repo:
+                remote_repo = pr_info.remote_repo
+
+            reporter = PRReporter(gh_req, pr_num)
+
+        elif commit is not None:
+            reporter = CommitReporter(gh_req)
+
+        if no_post:
+            reporter = PrintingReporter()
+
+        if self.debug:
+            log.setLevel(logging.DEBUG)
+
+        manager = RepoManager(authenticated=self.authenticated,
+                              cache_directory=self.cache_directory,
+                              tools=tools,
+                              executor=run)
+
+        try:
+            repo = manager.clone_repo(self.repo_name, remote_repo=remote_repo)
+            diff = repo.diff_commit(origin_commit, compare_point=commit)
+            results = run_analysis(repo, filenames=set(self.filenames or []))
+            # Move out to its own thing
+            parser = DiffContextParser(diff)
+            parse_results = parser.parse()
+
+            error_count = 0
+            for entry in parse_results:
+                added_lines = [l.number for l in entry.added_lines]
+                posMap = {}
+                for x in entry.added_lines:
+                    posMap[x.number] = x.position
+
+                violations = results.get(entry.result_filename, {})
+                violating_lines = [int(l) for l in violations.keys()]
+
+                matching_numbers = set(added_lines).intersection(violating_lines)
+                for x in matching_numbers:
+                    error_count += 1
+                    reporter.report_line(
+                        repo.name, commit, entry.result_filename, x,
+                        posMap[x], violations['%s' % x])
+
+            log.info("%d violations.", error_count)
+
+        finally:
+            manager.cleanup()
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(
@@ -163,79 +253,14 @@ if __name__ == '__main__':
 
     # parse out repo name
     args = parser.parse_args()
-    config = load_config(args.config_file)
-
-    if args.commit == "" and args.pr_number == "":
-        log.error("You must specify a commit or PR number")
-        sys.exit(1)
-
-    github_username = config.get('username', args.github_username)
-    github_password = config.get('password', args.github_password)
-    cache_directory = config.get('cache-directory', args.cache_directory)
-    repo_name = config.get('repo', args.repo_name)
-
-    pr_num = args.pr_number
-    commit = args.commit
-    origin_commit = args.origin_commit
-    no_post = args.no_post
-    remote_repo = None
-    tools = load_plugins()
-
-    gh_req = GithubRequester(github_username, github_password)
-
-    if pr_num is not None:
-        pr_info = get_pr_info(gh_req, repo_name, pr_num)
-        origin_commit = pr_info.head_sha
-        commit = pr_info.base_sha
-        if pr_info.has_remote_repo:
-            remote_repo = pr_info.remote_repo
-
-        reporter = PRReporter(gh_req, pr_num)
-
-    elif commit is not None:
-        reporter = CommitReporter(gh_req)
-
-    if no_post:
-        reporter = PrintingReporter()
-
-    if args.debug:
-        log.setLevel(logging.DEBUG)
-
-    if not github_username or not github_password:
-        log.error("You must specify a GitHub username or password.")
-        sys.exit(1)
-
-    manager = RepoManager(authenticated=args.authenticated,
-                          cache_directory=cache_directory,
-                          tools=tools,
-                          executor=run)
+    params = args.__dict__
+    params.update(**load_config(args.config_file))
 
     try:
-        repo = manager.clone_repo(repo_name, remote_repo=remote_repo)
-        diff = repo.diff_commit(commit, compare_point=origin_commit)
-        results = run_analysis(repo, filenames=set(args.filenames or []))
-        # Move out to its own thing
-        parser = DiffContextParser(diff)
-        parse_results = parser.parse()
-
-        error_count = 0
-        for entry in parse_results:
-            added_lines = [l.number for l in entry.added_lines]
-            posMap = {}
-            for x in entry.added_lines:
-                posMap[x.number] = x.position
-
-            violations = results.get(entry.result_filename, {})
-            violating_lines = [int(l) for l in violations.keys()]
-
-            matching_numbers = set(added_lines).intersection(violating_lines)
-            for x in matching_numbers:
-                error_count += 1
-                reporter.report_line(
-                    repo.name, commit, entry.result_filename, x,
-                    posMap[x], violations['%s' % x])
-
-        log.info("%d violations.", error_count)
-
-    finally:
-        manager.cleanup()
+        Imhotep(**params).invoke()
+    except NoCommitInfo:
+        log.error("You must specify a commit or PR number")
+        sys.exit(1)
+    except NoGithubCredentials:
+        log.error("You must specify a GitHub username or password.")
+        sys.exit(1)
