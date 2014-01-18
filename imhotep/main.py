@@ -184,7 +184,7 @@ class Imhotep(object):
                 for x in matching_numbers:
                     error_count += 1
                     reporter.report_line(
-                        repo.name, commit, entry.result_filename, x,
+                        repo.name, origin_commit, entry.result_filename, x,
                         pos_map[x], violations['%s' % x])
 
             log.info("%d violations.", error_count)
