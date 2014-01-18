@@ -1,3 +1,8 @@
+import logging
+
+log = logging.getLogger(__name__)
+
+
 class Reporter(object):
     def report_line(self, repo_name, commit, file_name, line_number, position, message):
         raise NotImplementedError()
@@ -49,6 +54,9 @@ class PRReporter(Reporter):
             'position': position, # line index into the diff
         }
 
-        return self.requester.post(
+        result = self.requester.post(
             'https://api.github.com/repos/%s/pulls/%s/comments' % (repo_name, self.pr_number),
             payload)
+        if result.status_code >= 400:
+            log.error("Error posting line to github. %s", result.json)
+        return result
