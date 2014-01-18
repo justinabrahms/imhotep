@@ -11,23 +11,16 @@ from repositories import Repository, AuthenticatedRepository
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
 from http import GithubRequester, NoGithubCredentials
+from exceptions import UnknownTools, NoReporterFound, NoCommitInfo
 
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
-class UnknownTools(Exception):
-    def __init__(self, known):
-        self.known = known
-
 def run(cmd, cwd='.'):
     log.debug("Running: %s", cmd)
     return subprocess.Popen(
         [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd).communicate()[0]
-
-
-class NoReporterFound(Exception):
-    pass
 
 class RepoManager(object):
     """
@@ -117,9 +110,6 @@ def load_plugins():
         tools.append(klass(run))
     return tools
 
-class NoCommitInfo(Exception):
-    pass
-
 class Imhotep(object):
     def __init__(self, requester=None, repo_manager=None,
                  repo_name=None, pr_number=None,
@@ -204,7 +194,7 @@ def gen_imhotep(**params):
 
     plugins = load_plugins()
     tools = get_tools(params['linter'], plugins)
-    
+
     manager = RepoManager(authenticated=params['authenticated'],
                   cache_directory=params['cache_directory'],
                   tools=load_plugins(),
