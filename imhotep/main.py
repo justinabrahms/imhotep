@@ -1,3 +1,4 @@
+from collections import namedtuple
 import json
 import logging
 import os
@@ -113,9 +114,13 @@ def load_plugins():
     return tools
 
 
+CommitInfo = namedtuple("CommitInfo", ('commit', 'origin', 'remote_repo'))
+
+
 class Imhotep(object):
     def __init__(self, requester=None, repo_manager=None,
                  repo_name=None, pr_number=None,
+                 commit_info=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
                  filenames=None, **kwargs):
         # TODO(justinabrahms): kwargs exist until we handle cli params better
@@ -123,6 +128,7 @@ class Imhotep(object):
         self.requester = requester
         self.manager = repo_manager
 
+        self.commit_info = commit_info
         self.repo_name = repo_name
         self.pr_number = pr_number
         self.commit = commit
@@ -143,18 +149,7 @@ class Imhotep(object):
             return CommitReporter(self.requester)
 
     def invoke(self):
-        commit = self.commit
-        origin_commit = self.origin_commit
-        remote_repo = None
-
-        if self.pr_number is not None:
-            pr_info = get_pr_info(self.requester, self.repo_name,
-                                  self.pr_number)
-            commit = pr_info.base_sha
-            origin_commit = pr_info.head_sha
-            if pr_info.has_remote_repo:
-                remote_repo = pr_info.remote_repo
-
+        cinfo = self.commit_info
         reporter = self.get_reporter()
 
         if self.debug:
@@ -162,9 +157,11 @@ class Imhotep(object):
 
         try:
             repo = self.manager.clone_repo(self.repo_name,
-                                           remote_repo=remote_repo)
-            diff = repo.diff_commit(commit, compare_point=origin_commit)
+                                           remote_repo=cinfo.remote_repo)
+            diff = repo.diff_commit(cinfo.commit,
+                                    compare_point=cinfo.origin_commit)
             results = run_analysis(repo, filenames=set(self.filenames or []))
+
             # Move out to its own thing
             parser = DiffContextParser(diff)
             parse_results = parser.parse()
@@ -184,13 +181,14 @@ class Imhotep(object):
                 for x in matching_numbers:
                     error_count += 1
                     reporter.report_line(
-                        repo.name, origin_commit, entry.result_filename, x,
-                        pos_map[x], violations['%s' % x])
+                        repo.name, cinfo.origin_commit, entry.result_filename,
+                        x, pos_map[x], violations['%s' % x])
 
-            log.info("%d violations.", error_count)
-
+                log.info("%d violations.", error_count)
         finally:
             self.manager.cleanup()
+
+
 
 
 def gen_imhotep(**kwargs):
@@ -204,7 +202,16 @@ def gen_imhotep(**kwargs):
                           cache_directory=kwargs['cache_directory'],
                           tools=tools,
                           executor=run)
-    return Imhotep(requester=req, repo_manager=manager, **kwargs)
+
+    if kwargs['pr_number']:
+        pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'])
+        commit_info = pr_info.to_commit_info()
+    else:
+        # TODO(justinabrahms): origin & remote_repo doesnt work for commits
+        commit_info = CommitInfo(kwargs['commit'], None, None)
+
+    return Imhotep(requester=req, repo_manager=manager,
+                   commit_info=commit_info, **kwargs)
 
 
 def get_tools(whitelist, known_plugins):
