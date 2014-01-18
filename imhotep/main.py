@@ -185,8 +185,6 @@ class Imhotep(object):
             self.manager.cleanup()
 
 
-
-
 def gen_imhotep(**kwargs):
     req = GithubRequester(kwargs['github_username'],
                           kwargs['github_password'])
