@@ -10,9 +10,21 @@ def test_skip_line__plus():
     dcp = DiffContextParser("")
     assert dcp.should_skip_line("+++ b/.gitignore")
 
+def test_skip_line__null():
+    dcp = DiffContextParser("")
+    assert dcp.should_skip_line("--- /dev/null")
+
+def test_skip_line__new_file():
+    dcp = DiffContextParser("")
+    assert dcp.should_skip_line("new file mode 100644")
+
 def test_skip_line__index():
     dcp = DiffContextParser("")
     assert dcp.should_skip_line("index 3929bb3..633facf 100644")
+
+def test_skip_line__index_no_permissions():
+    dcp = DiffContextParser("")
+    assert dcp.should_skip_line("index 0000000..78ce7f6")
 
 def test_skip_line__noskip():
     dcp = DiffContextParser("")

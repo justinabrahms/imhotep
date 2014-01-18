@@ -41,12 +41,17 @@ class DiffContextParser:
         self.diff_text = diff_text
 
     def should_skip_line(self, line):
-        # "index oldsha..newsha permissions" line
-        if re.search(r'index \w+..\w+ \d', line):
+        # "index oldsha..newsha permissions" line or..
+        # "index 0000000..78ce7f6"
+        if re.search(r'index \w+..\w+( \d)?', line):
             return True
         # --- a/.gitignore
         # +++ b/.gitignore
-        elif re.search('(-|\+){3} (a|b)/.*', line):
+        # --- /dev/null
+        elif re.search('(-|\+){3} (a|b)?/.*', line):
+            return True
+        # "new file mode 100644" on new files
+        elif re.search('new file mode.*', line):
             return True
         return False
 
