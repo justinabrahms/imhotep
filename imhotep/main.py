@@ -156,11 +156,6 @@ class Imhotep(object):
 
         reporter = self.get_reporter()
 
-        if self.debug:
-            logging.basicConfig(level=logging.DEBUG)
-        else:
-            logging.basicConfig()
-
         try:
             repo = self.manager.clone_repo(self.repo_name,
                                            remote_repo=remote_repo)
@@ -286,6 +281,12 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
     params = args.__dict__
     params.update(**load_config(args.config_file))
+
+
+    if params['debug']:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig()
 
     try:
         imhotep = gen_imhotep(**params)
