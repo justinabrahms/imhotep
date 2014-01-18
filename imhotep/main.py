@@ -15,7 +15,6 @@ from http import GithubRequester, NoGithubCredentials
 from errors import UnknownTools, NoCommitInfo
 
 
-logging.basicConfig()
 log = logging.getLogger(__name__)
 
 
@@ -151,9 +150,6 @@ class Imhotep(object):
     def invoke(self):
         cinfo = self.commit_info
         reporter = self.get_reporter()
-
-        if self.debug:
-            log.setLevel(logging.DEBUG)
 
         try:
             repo = self.manager.clone_repo(self.repo_name,
@@ -292,6 +288,12 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
     params = args.__dict__
     params.update(**load_config(args.config_file))
+
+
+    if params['debug']:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig()
 
     try:
         imhotep = gen_imhotep(**params)
