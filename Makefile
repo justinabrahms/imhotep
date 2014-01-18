@@ -1,2 +1,2 @@
 test:
-	py.test --cov . --cov-report term-missing
+	py.test  -rxs --cov . --cov-report term-missing
