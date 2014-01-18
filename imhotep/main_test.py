@@ -1,15 +1,30 @@
+from collections import namedtuple
 import re
 
 import mock
 
 from main import (load_config, RepoManager, run_analysis,get_tools,
-                  UnknownTools, Imhotep, NoCommitInfo)
+                  UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
 from pull_requests import Remote
 from testing_utils import calls_matching_re
 
 repo_name = 'justinabrahms/imhotep'
+
+
+def test_run():
+    with mock.patch("subprocess.Popen") as popen:
+        run('test')
+        popen.assert_called_with(
+            ['test'], cwd='.', stdout=mock.ANY, shell=True)
+
+
+def test_run_known_cwd():
+    with mock.patch("subprocess.Popen") as popen:
+        run('test', cwd="/known")
+        popen.assert_called_with(
+            ['test'], cwd='/known', stdout=mock.ANY, shell=True)
 
 
 def test_config_loading():
@@ -180,3 +195,19 @@ def test_plugin_filtering_returns_subset_if_found():
     t1 = Thing1()
     plugins = [t1, Thing2()]
     assert [t1] == get_tools(['imhotep.main_test:Thing1'], plugins)
+
+
+test_tool = namedtuple('TestTool', ('executor'),)
+
+
+class EP(object):
+    def load(self):
+        return test_tool
+
+
+def test_load_plugins():
+    with mock.patch('pkg_resources.iter_entry_points') as ep:
+        ep.return_value = [EP(), EP()]
+        plugins = load_plugins()
+        assert not isinstance(plugins[0], EP)
+        assert 2 == len(plugins)

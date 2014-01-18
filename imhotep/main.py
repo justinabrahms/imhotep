@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from pkg_resources import iter_entry_points
+import pkg_resources
 import subprocess
 import sys
 from tempfile import mkdtemp
@@ -107,7 +107,7 @@ def load_config(filename):
 
 def load_plugins():
     tools = []
-    for ep in iter_entry_points(group='imhotep_linters'):
+    for ep in pkg_resources.iter_entry_points(group='imhotep_linters'):
         klass = ep.load()
         tools.append(klass(run))
     return tools
