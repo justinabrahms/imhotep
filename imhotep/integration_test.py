@@ -49,7 +49,6 @@ def test_github_post():
     repo = 'imhotepbot/sacrificial-integration-tests'
     pr = 1
     test_str = 'integration test error name'
-    comments = []
     req = GithubRequester(ghu, ghp)
     r = PRReporter(req, pr)
     r.report_line(repo,
