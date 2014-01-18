@@ -11,31 +11,6 @@ list comments: GET /repos/:owner/:repo/pulls/:number/comments
 
 delete comment: DELETE /repos/:owner/:repo/pulls/comments/:number
                 http://developer.github.com/v3/pulls/comments/#delete-a-comment
-
-
--- things needed to actually make this sellable:
-
-1. landing page
-2. github linking
-3. config management per account
-4. billing system
-5. web hook from github to trigger build run
-
-
-Questionaire:
-
-1. Does your company have a code review process?
-2. Who do you use for it? github, bb, google code, other
-3. Do you you run linters on your code?
-4. How much time do you spend on code review?
-5. T/F: Within the past month, I have caught style infractions in code review
-that linters would have caught.
-
-
-Finding Customers, broken into segments:
-1. Rank/File Developers
-2. Architects
-3. Management / Business owners
 """
 import os
 import pytest
