@@ -3,9 +3,5 @@ class UnknownTools(Exception):
         self.known = known
 
 
-class NoReporterFound(Exception):
-    pass
-
-
 class NoCommitInfo(Exception):
     pass

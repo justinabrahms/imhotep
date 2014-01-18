@@ -11,7 +11,7 @@ from repositories import Repository, AuthenticatedRepository
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
 from http import GithubRequester, NoGithubCredentials
-from exceptions import UnknownTools, NoReporterFound, NoCommitInfo
+from exceptions import UnknownTools, NoCommitInfo
 
 
 logging.basicConfig()
@@ -53,7 +53,7 @@ class RepoManager(object):
         return dirname
 
     def clone_repo(self, repo_name, remote_repo):
-        "Clones the given repo and returns the Repository object."
+        """Clones the given repo and returns the Repository object."""
         dirname = self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
@@ -142,14 +142,13 @@ class Imhotep(object):
             return CommitReporter(self.requester)
 
     def invoke(self):
-        pr_num = self.pr_number
         commit = self.commit
         origin_commit = self.origin_commit
-        no_post = self.no_post
         remote_repo = None
 
         if self.pr_number is not None:
-            pr_info = get_pr_info(self.requester, self.repo_name, self.pr_number)
+            pr_info = get_pr_info(self.requester, self.repo_name,
+                                  self.pr_number)
             commit = pr_info.base_sha
             origin_commit = pr_info.head_sha
             if pr_info.has_remote_repo:
@@ -161,7 +160,8 @@ class Imhotep(object):
             log.setLevel(logging.DEBUG)
 
         try:
-            repo = self.manager.clone_repo(self.repo_name, remote_repo=remote_repo)
+            repo = self.manager.clone_repo(self.repo_name,
+                                           remote_repo=remote_repo)
             diff = repo.diff_commit(commit, compare_point=origin_commit)
             results = run_analysis(repo, filenames=set(self.filenames or []))
             # Move out to its own thing
@@ -171,19 +171,20 @@ class Imhotep(object):
             error_count = 0
             for entry in parse_results:
                 added_lines = [l.number for l in entry.added_lines]
-                posMap = {}
+                pos_map = {}
                 for x in entry.added_lines:
-                    posMap[x.number] = x.position
+                    pos_map[x.number] = x.position
 
                 violations = results.get(entry.result_filename, {})
                 violating_lines = [int(l) for l in violations.keys()]
 
-                matching_numbers = set(added_lines).intersection(violating_lines)
+                matching_numbers = set(added_lines).intersection(
+                    violating_lines)
                 for x in matching_numbers:
                     error_count += 1
                     reporter.report_line(
                         repo.name, commit, entry.result_filename, x,
-                        posMap[x], violations['%s' % x])
+                        pos_map[x], violations['%s' % x])
 
             log.info("%d violations.", error_count)
 
@@ -191,19 +192,18 @@ class Imhotep(object):
             self.manager.cleanup()
 
 
-def gen_imhotep(**params):
-    req = GithubRequester(params['github_username'],
-                          params['github_password'])
-
+def gen_imhotep(**kwargs):
+    req = GithubRequester(kwargs['github_username'],
+                          kwargs['github_password'])
 
     plugins = load_plugins()
-    tools = get_tools(params['linter'], plugins)
+    tools = get_tools(kwargs['linter'], plugins)
 
-    manager = RepoManager(authenticated=params['authenticated'],
-                  cache_directory=params['cache_directory'],
-                  tools=load_plugins(),
-                  executor=run)
-    return Imhotep(requester=req, repo_manager=manager, **params)
+    manager = RepoManager(authenticated=kwargs['authenticated'],
+                          cache_directory=kwargs['cache_directory'],
+                          tools=tools,
+                          executor=run)
+    return Imhotep(requester=req, repo_manager=manager, **kwargs)
 
 
 def get_tools(whitelist, known_plugins):
@@ -211,7 +211,7 @@ def get_tools(whitelist, known_plugins):
     Filter all known plugins by a whitelist specified. If the whitelist is
     empty, default to all plugins.
     """
-    getpath = lambda x: "%s:%s" % (x.__module__, x.__class__.__name__)
+    getpath = lambda c: "%s:%s" % (c.__module__, c.__class__.__name__)
 
     tools = [x for x in known_plugins if getpath(x) in whitelist]
 
@@ -224,55 +224,55 @@ def get_tools(whitelist, known_plugins):
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(
+    arg_parser = argparse.ArgumentParser(
         description="Posts static analysis results to github.")
-    parser.add_argument(
+    arg_parser.add_argument(
         '--config-file',
         default="imhotep_config.json",
         type=str,
         help="Configuration file in json.")
-    parser.add_argument(
+    arg_parser.add_argument(
         '--repo_name', required=True,
         help="Github repository name in owner/repo format")
-    parser.add_argument(
+    arg_parser.add_argument(
         '--commit',
         help="The sha of the commit to run static analysis on.")
-    parser.add_argument(
+    arg_parser.add_argument(
         '--origin-commit',
         required=False,
         default='HEAD^',
         help='Commit to use as the comparison point.')
-    parser.add_argument(
+    arg_parser.add_argument(
         '--filenames', nargs="+",
         help="filenames you want static analysis to be limited to.")
-    parser.add_argument(
+    arg_parser.add_argument(
         '--debug',
         action='store_true',
         help="Will dump debugging output and won't clean up after itself.")
-    parser.add_argument(
+    arg_parser.add_argument(
         '--github-username',
         help='Github user to post comments as.')
-    parser.add_argument(
+    arg_parser.add_argument(
         '--github-password',
         help='Github password for the above user.')
-    parser.add_argument(
+    arg_parser.add_argument(
         '--no-post',
         action="store_true",
         help="[DEBUG] will print out comments rather than posting to github.")
-    parser.add_argument(
+    arg_parser.add_argument(
         '--authenticated',
         action="store_true",
         help="Indicates the repository requires authentication")
-    parser.add_argument(
+    arg_parser.add_argument(
         '--pr-number',
         help="Number of the pull request to comment on")
-    parser.add_argument(
+    arg_parser.add_argument(
         '--cache-directory',
         help="Path to directory to cache the repository",
         type=str,
         required=False)
 
-    parser.add_argument(
+    arg_parser.add_argument(
         '--linter',
         help="Path to linters to run, e.g. 'imhotep.tools:PyLint'",
         type=str,
@@ -281,7 +281,7 @@ if __name__ == '__main__':
         required=False)
 
     # parse out repo name
-    args = parser.parse_args()
+    args = arg_parser.parse_args()
     params = args.__dict__
     params.update(**load_config(args.config_file))
 
@@ -298,4 +298,4 @@ if __name__ == '__main__':
         log.error("Known linters: %s", ', '.join(e.known))
         sys.exit(1)
 
-    imhotep.run()
+    imhotep.invoke()
