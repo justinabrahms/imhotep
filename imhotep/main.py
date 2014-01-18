@@ -17,10 +17,12 @@ from exceptions import UnknownTools, NoReporterFound, NoCommitInfo
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
+
 def run(cmd, cwd='.'):
     log.debug("Running: %s", cmd)
     return subprocess.Popen(
         [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd).communicate()[0]
+
 
 class RepoManager(object):
     """
@@ -110,6 +112,7 @@ def load_plugins():
         tools.append(klass(run))
     return tools
 
+
 class Imhotep(object):
     def __init__(self, requester=None, repo_manager=None,
                  repo_name=None, pr_number=None,
@@ -187,6 +190,7 @@ class Imhotep(object):
         finally:
             self.manager.cleanup()
 
+
 def gen_imhotep(**params):
     req = GithubRequester(params['github_username'],
                           params['github_password'])
@@ -200,6 +204,7 @@ def gen_imhotep(**params):
                   tools=load_plugins(),
                   executor=run)
     return Imhotep(requester=req, repo_manager=manager, **params)
+
 
 def get_tools(whitelist, known_plugins):
     """
@@ -215,6 +220,7 @@ def get_tools(whitelist, known_plugins):
             raise UnknownTools(map(getpath, known_plugins))
         tools = known_plugins
     return tools
+
 
 if __name__ == '__main__':
     import argparse
