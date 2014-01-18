@@ -1,3 +1,8 @@
+import logging
+
+log = logging.getLogger(__name__)
+
+
 class Reporter(object):
     def report_line(self, repo_name, commit, file_name, line_number, position, message):
         raise NotImplementedError()
@@ -48,7 +53,7 @@ class PRReporter(Reporter):
             'path': file_name, # relative file path
             'position': position, # line index into the diff
         }
-
-        return self.requester.post(
-            'https://api.github.com/repos/%s/pulls/%s/comments' % (repo_name, self.pr_number),
-            payload)
+        request = 'https://api.github.com/repos/%s/pulls/%s/comments' % (repo_name, self.pr_number)
+        log.debug('PR REQUEST: %s', request)
+        log.debug('PR PAYLOAD: %s', payload)
+        return self.requester.post(request, payload)
