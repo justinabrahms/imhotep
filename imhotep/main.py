@@ -11,7 +11,7 @@ from repositories import Repository, AuthenticatedRepository
 from diff_parser import DiffContextParser
 from pull_requests import get_pr_info
 from http import GithubRequester, NoGithubCredentials
-from exceptions import UnknownTools, NoCommitInfo
+from errors import UnknownTools, NoCommitInfo
 
 
 logging.basicConfig()
@@ -117,7 +117,8 @@ class Imhotep(object):
     def __init__(self, requester=None, repo_manager=None,
                  repo_name=None, pr_number=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
-                 filenames=None):
+                 filenames=None, **kwargs):
+        # TODO(justinabrahms): kwargs exist until we handle cli params better
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
         self.requester = requester
         self.manager = repo_manager
