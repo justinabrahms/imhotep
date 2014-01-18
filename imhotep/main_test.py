@@ -3,8 +3,8 @@ import re
 
 import mock
 
-from main import (load_config, RepoManager, run_analysis,get_tools,
-                  UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
+from main import (load_config, RepoManager, run_analysis, get_tools,
+    UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
 from pull_requests import Remote
@@ -187,9 +187,11 @@ def test_plugin_filtering_throws_if_unfound():
     except UnknownTools:
         pass
 
+
 def test_plugin_filtering_defaults_to_all():
     plugins = [Thing1(), Thing2()]
     assert plugins == get_tools([], plugins)
+
 
 def test_plugin_filtering_returns_subset_if_found():
     t1 = Thing1()
@@ -197,7 +199,7 @@ def test_plugin_filtering_returns_subset_if_found():
     assert [t1] == get_tools(['imhotep.main_test:Thing1'], plugins)
 
 
-test_tool = namedtuple('TestTool', ('executor'),)
+test_tool = namedtuple('TestTool', ('executor'), )
 
 
 class EP(object):

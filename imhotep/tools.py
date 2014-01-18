@@ -14,6 +14,7 @@ class Tool(object):
       {'relative_filename': {'line_number': [error1, error2]}}
       eg: {'imhotep/main.py': {'103': ['line too long']}}
     """
+
     def __init__(self, command_executor, filenames=set()):
         self.executor = command_executor
         self.filenames = filenames
@@ -45,7 +46,7 @@ class Tool(object):
             if output is not None:
                 filename, lineno, messages = output
                 if filename.startswith(dirname):
-                    filename = filename[len(dirname)+1:]
+                    filename = filename[len(dirname) + 1:]
                 retval[filename][lineno].append(messages)
         return retval
 
@@ -80,8 +81,7 @@ class JSHint(Tool):
     jshintrc_filename = '.jshintrc'
 
     def process_line(self, dirname, line):
-        line = line[len(dirname)+1:]  # +1 for trailing slash to make dir
-                                      # relative
+        line = line[len(dirname) + 1:]  # +1 for trailing slash to make relative
         match = self.response_format.search(line)
         if match is not None:
             return match.groups()

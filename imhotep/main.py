@@ -2,10 +2,11 @@ from collections import namedtuple
 import json
 import logging
 import os
-import pkg_resources
 import subprocess
 import sys
 from tempfile import mkdtemp
+
+import pkg_resources
 
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository
@@ -226,6 +227,7 @@ def get_tools(whitelist, known_plugins):
 
 if __name__ == '__main__':
     import argparse
+
     arg_parser = argparse.ArgumentParser(
         description="Posts static analysis results to github.")
     arg_parser.add_argument(
@@ -286,7 +288,6 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
     params = args.__dict__
     params.update(**load_config(args.config_file))
-
 
     if params['debug']:
         logging.basicConfig(level=logging.DEBUG)

@@ -55,9 +55,9 @@ class PRReporter(Reporter):
                     message):
         payload = {
             'body': message,
-            'commit_id': commit,  # sha
-            'path': file_name,  # relative file path
-            'position': position,  # line index into the diff
+            'commit_id': commit, # sha
+            'path': file_name, # relative file path
+            'position': position, # line index into the diff
         }
         request = 'https://api.github.com/repos/%s/pulls/%s/comments' % (
             repo_name, self.pr_number)

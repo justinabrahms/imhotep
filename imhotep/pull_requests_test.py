@@ -1,6 +1,4 @@
-import os
 import json
-from collections import namedtuple
 
 from imhotep.testing_utils import fixture_path, Requester
 from imhotep.pull_requests import PRInfo, get_pr_info
@@ -21,19 +19,24 @@ non_remote_pr = PRInfo(not_remote_json)
 def test_pr_info_base_sha():
     assert remote_pr.base_sha == '02c774e4a8d74154468211b14f631748c1d23ef6'
 
+
 def test_pr_info_head_sha():
     assert remote_pr.head_sha == '9216c7b61c6dbf547a22e5a5ad282252acc9735f'
+
 
 def test_pr_info_has_remote_repo():
     assert remote_pr.has_remote_repo
 
+
 def test_pr_info_doesnt_have_remote():
     assert not non_remote_pr.has_remote_repo
+
 
 def test_pr_info_remote_repo():
     remote = remote_pr.remote_repo
     assert remote.name == 'scottjab'
     assert remote.url == 'https://github.com/scottjab/imhotep.git'
+
 
 def test_pr_info():
     r = Requester(remote_json_fixture)

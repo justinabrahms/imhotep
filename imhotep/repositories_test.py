@@ -33,6 +33,7 @@ def test_diff_commit__compare_point_applied():
     uar.diff_commit('commit-to-diff', compare_point='base')
     executor.assert_any_call("cd /loc/ && git checkout base")
 
+
 def test_apply_commit():
     executor = mock.Mock()
     uar = Repository(repo_name, '/loc/', [None], executor)

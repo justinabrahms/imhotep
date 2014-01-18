@@ -6,7 +6,8 @@ Integration test for imhotep.
 3. Delete all review comments.
 
 list comments: GET /repos/:owner/:repo/pulls/:number/comments
-               http://developer.github.com/v3/pulls/comments/#list-comments-on-a-pull-request
+               http://developer.github
+               .com/v3/pulls/comments/#list-comments-on-a-pull-request
 
 delete comment: DELETE /repos/:owner/:repo/pulls/comments/:number
                 http://developer.github.com/v3/pulls/comments/#delete-a-comment
@@ -27,7 +28,8 @@ Questionaire:
 2. Who do you use for it? github, bb, google code, other
 3. Do you you run linters on your code?
 4. How much time do you spend on code review?
-5. T/F: Within the past month, I have caught style infractions in code review that linters would have caught.
+5. T/F: Within the past month, I have caught style infractions in code review
+that linters would have caught.
 
 
 Finding Customers, broken into segments:
@@ -42,6 +44,7 @@ from imhotep.reporters import PRReporter
 
 ghu = os.getenv('GITHUB_USERNAME')
 ghp = os.getenv('GITHUB_PASSWORD')
+
 
 @pytest.mark.skipif(not ghu or not ghp,
                     reason="must specify github credentials as env var")
