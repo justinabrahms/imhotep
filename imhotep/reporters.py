@@ -10,7 +10,6 @@ class Reporter(object):
 
 class PrintingReporter(Reporter):
     def report_line(self, repo_name, commit, file_name, line_number, position, message):
-        log.debug('WARNING')
         print "Would have posted the following: \n" \
           "commit: %(commit)s\n" \
           "position: %(position)s\n" \
@@ -56,8 +55,8 @@ class PRReporter(Reporter):
             'position': position, # line index into the diff
         }
         request = 'https://api.github.com/repos/%s/pulls/%s/comments' % (repo_name, self.pr_number)
-        log.debug("PR request: %s", request)
-        log.debug("PR payload: %s", payload)
+        log.debug("PR Request: %s", request)
+        log.debug("PR Payload: %s", payload)
         result = self.requester.post(request, payload)
         if result.status_code >= 400:
             log.error("Error posting line to github. %s", result.json)
