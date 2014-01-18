@@ -23,6 +23,10 @@ class GithubRequester(object):
         log.debug("Fetching %s", url)
         return requests.get(url, auth=self.get_auth())
 
+    def delete(self, url):
+        log.debug("Deleting %s", url)
+        return requests.delete(url, auth=self.get_auth())
+
     def post(self, url, payload):
         log.debug("Posting %s to %s", payload, url)
         return requests.post(
