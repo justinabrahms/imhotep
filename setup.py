@@ -10,11 +10,5 @@ setup(
     author_email='justin@abrah.ms',
     description='A tool to pipe linters into code review',
     requires=['requests'],
-    entry_points={
-        'imhotep_linters': [
-            '.js = tools:JSHint',
-            '.py = tools:PyLint [pylint]'
-        ],
-    },
     extras_require={'pylint': 'PyLint'},
 )
