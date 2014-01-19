@@ -24,6 +24,12 @@ virtualenv env
 pip install -r requirements.txt
 ```
 
+You'll also need to install the plugins you'd like to run. Examples
+include [jshint](https://github.com/justinabrahms/imhotep_jshint),
+[pep8](https://github.com/justinabrahms/imhotep_pep8), and
+[pylint](https://github.com/justinabrahms/imhotep_pylint). You can
+install those with pip. Example: `pip install imhotep_jshint`.
+
 ## Usage
 
 To use imhotep, we must tell it which repository to look at, who to
