@@ -1,15 +1,13 @@
-from collections import namedtuple
 import json
 import logging
 import os
 import subprocess
 import sys
-from tempfile import mkdtemp
 
 import pkg_resources
+from imhotep.reporters import get_reporter
 
-from reporters import PrintingReporter, CommitReporter, PRReporter
-from repositories import Repository, AuthenticatedRepository
+from repositories import RepoManager
 from diff_parser import DiffContextParser
 from shas import get_pr_info, CommitInfo
 from http import GithubRequester, NoGithubCredentials
@@ -23,64 +21,6 @@ def run(cmd, cwd='.'):
     log.debug("Running: %s", cmd)
     return subprocess.Popen(
         [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd).communicate()[0]
-
-
-class RepoManager(object):
-    """
-    Manages creation and deletion of `Repository` objects.
-    """
-    to_cleanup = {}
-
-    def __init__(self, authenticated=False, cache_directory=None,
-                 tools=None, executor=None):
-        self.should_cleanup = cache_directory is None
-        self.authenticated = authenticated
-        self.cache_directory = cache_directory
-        self.tools = tools or []
-        self.executor = executor
-
-    def get_repo_class(self):
-        if self.authenticated:
-            return AuthenticatedRepository
-        return Repository
-
-    def clone_dir(self, repo_name):
-        dired_repo_name = repo_name.replace('/', '__')
-        if not self.cache_directory:
-            dirname = mkdtemp(suffix=dired_repo_name)
-        else:
-            dirname = os.path.abspath("%s/%s" % (
-                self.cache_directory, dired_repo_name))
-        return dirname
-
-    def clone_repo(self, repo_name, remote_repo):
-        """Clones the given repo and returns the Repository object."""
-        dirname = self.clone_dir(repo_name)
-        self.to_cleanup[repo_name] = dirname
-        klass = self.get_repo_class()
-        repo = klass(repo_name, dirname, self.tools, self.executor)
-        if os.path.isdir("%s/.git" % dirname):
-            log.debug("Updating %s to %s", repo.download_location, dirname)
-            self.executor(
-                "cd %s && git checkout master && git pull --all" % dirname)
-        else:
-            log.debug("Cloning %s to %s", repo.download_location, dirname)
-            self.executor(
-                "git clone %s %s" % (repo.download_location, dirname))
-
-        if remote_repo is not None:
-            log.debug("Pulling remote branch from %s", remote_repo.url)
-            self.executor("cd %s && git remote add %s %s" % (dirname,
-                                                             remote_repo.name,
-                                                             remote_repo.url))
-            self.executor("cd %s && git pull --all" % dirname)
-        return repo
-
-    def cleanup(self):
-        if self.should_cleanup:
-            for repo_dir in self.to_cleanup.values():
-                log.debug("Cleaning up %s", repo_dir)
-                self.executor('rm -rf %s' % repo_dir)
 
 
 def load_config(filename):
@@ -133,24 +73,20 @@ class Imhotep(object):
         cinfo = self.commit_info
 
         try:
-            repo = self.manager.clone_repo(self.repo_name,
-                                           remote_repo=cinfo.remote_repo)
-            diff_txt = repo.diff_commit(cinfo.commit,
-                                    compare_point=cinfo.origin)
-            errors = repo.run_tools(repo, filenames=set(self.filenames or []))
+            diff_txt = self.manager.diff_commit(cinfo.commit,
+                                                compare_point=cinfo.origin)
+            errors = self.manager.run_tools(filenames=set(self.filenames or []))
 
             diff_objects = DiffContextParser(diff_txt).parse()
-            self.report_errors(repo.name, diff_objects, errors)
+            self.report_errors(diff_objects, errors)
         finally:
             self.manager.cleanup()
 
-    def report_errors(self, repo_name, diff_objects, errors):
+    def report_errors(self, diff_objects, errors):
         error_count = 0
         for entry in diff_objects:
-            added_lines = [l.number for l in entry.added_lines]
-            pos_map = {}
-            for x in entry.added_lines:
-                pos_map[x.number] = x.position
+            pos_map = dict([(l.number, l.position) for l in entry.added_lines])
+            added_lines = pos_map.keys()
 
             violations = errors.get(entry.result_filename, {})
             violating_lines = [int(l) for l in violations.keys()]
@@ -160,19 +96,12 @@ class Imhotep(object):
             for x in matching_numbers:
                 error_count += 1
                 self.reporter.report_line(
-                    repo_name, self.commit_info.origin, entry.result_filename,
+                    self.repo_name, self.commit_info.origin,
+                    entry.result_filename,
                     x, pos_map[x], violations['%s' % x])
 
             log.info("%d violations.", error_count)
 
-
-def get_reporter(requester, no_post=None, pr_number=None, commit=None):
-    if no_post:
-        return PrintingReporter()
-    elif pr_number:
-        return PRReporter(requester, pr_number)
-    elif commit is not None:
-        return  CommitReporter(requester)
 
 def gen_imhotep(**kwargs):
     req = GithubRequester(kwargs['github_username'],
@@ -180,11 +109,6 @@ def gen_imhotep(**kwargs):
 
     plugins = load_plugins()
     tools = get_tools(kwargs['linter'], plugins)
-
-    manager = RepoManager(authenticated=kwargs['authenticated'],
-                          cache_directory=kwargs['cache_directory'],
-                          tools=tools,
-                          executor=run)
 
     reporter = get_reporter(req, no_post=kwargs.get('no_post'),
                             pr_number=kwargs.get('pr_number'),
@@ -196,6 +120,13 @@ def gen_imhotep(**kwargs):
     else:
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
         commit_info = CommitInfo(kwargs['commit'], None, None)
+
+    manager = RepoManager(authenticated=kwargs['authenticated'],
+                          cache_directory=kwargs['cache_directory'],
+                          tools=tools,
+                          repo_name=kwargs['repo_name'],
+                          remote_repo=commit_info.remote_repo,
+                          executor=run)
 
     return Imhotep(requester=req, repo_manager=manager, reporter=reporter,
                    commit_info=commit_info, **kwargs)

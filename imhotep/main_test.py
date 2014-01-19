@@ -3,10 +3,10 @@ import re
 
 import mock
 
-from main import (load_config, RepoManager, get_tools,
-    UnknownTools, Imhotep, NoCommitInfo, run, load_plugins, get_reporter)
-from reporters import PrintingReporter, CommitReporter, PRReporter
-from repositories import Repository, AuthenticatedRepository, ToolsNotFound
+from main import (load_config, get_tools,
+    UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
+from repositories import Repository, AuthenticatedRepository, ToolsNotFound, \
+    RepoManager
 from shas import Remote
 from testing_utils import calls_matching_re
 
@@ -62,34 +62,36 @@ def test_cleanup_doesnt_call_without_clean_files():
 def test_clone_dir_nocache():
     # TODO(justinabrahms): this test has side effects which generate temp
     # dirs. Need to fix that.
-    r = RepoManager(tools=[None])
-    val = r.clone_dir(repo_name)
+    r = RepoManager(tools=[None], repo_name=repo_name)
+    val = r._clone_dir()
     assert '/tmp' in val
 
 
 def test_clone_dir_cached():
-    r = RepoManager(cache_directory="/weeble/wobble/", tools=[None])
-    val = r.clone_dir(repo_name)
+    r = RepoManager(cache_directory="/weeble/wobble/", tools=[None],
+                    repo_name=repo_name)
+    val = r._clone_dir()
     assert val.startswith('/weeble/wobble/justinabrahms__imhotep')
 
 
 def test_clone_adds_to_cleanup_dict():
     m = mock.Mock()
     r = RepoManager(cache_directory="/weeble/wobble/", executor=m,
-                    tools=[None])
-    r.clone_repo(repo_name, None)
-    directory = r.clone_dir(repo_name)
+                    tools=[None], repo_name=repo_name)
+    r._clone_repo()
+    directory = r._clone_dir()
     assert directory in r.to_cleanup[repo_name]
 
 
 def test_updates_if_existing_repo():
     finder = re.compile(r'git clone')
     m = mock.Mock()
-    r = RepoManager(cache_directory="/fooz", executor=m, tools=[None])
+    r = RepoManager(cache_directory="/fooz", executor=m, tools=[None],
+                    repo_name=repo_name)
 
     with mock.patch('os.path.isdir') as isdir:
         isdir.return_value = True
-        r.clone_repo(repo_name, None)
+        r._clone_repo()
 
     assert len(calls_matching_re(m, finder)) == 0, "Shouldn't git clone"
 
@@ -97,8 +99,9 @@ def test_updates_if_existing_repo():
 def test_clones_if_no_existing_repo():
     finder = re.compile(r'git clone')
     m = mock.Mock()
-    r = RepoManager(cache_directory="/fooz", executor=m, tools=[None])
-    r.clone_repo(repo_name, None)
+    r = RepoManager(cache_directory="/fooz", executor=m, tools=[None],
+                    repo_name=repo_name)
+    r._clone_repo()
 
     assert len(calls_matching_re(m, finder)) == 1, "Didn't git clone"
 
@@ -106,8 +109,9 @@ def test_clones_if_no_existing_repo():
 def test_adds_remote_if_pr_is_remote():
     finder = re.compile(r'git remote add name url')
     m = mock.Mock()
-    r = RepoManager(cache_directory="/fooz", executor=m, tools=[None])
-    r.clone_repo(repo_name, Remote("name", "url"))
+    r = RepoManager(cache_directory="/fooz", executor=m, tools=[None],
+                    repo_name=repo_name, remote_repo=Remote("name", "url"))
+    r._clone_repo()
 
     assert len(calls_matching_re(m, finder)) == 1, "Remote not added"
 
@@ -115,8 +119,9 @@ def test_adds_remote_if_pr_is_remote():
 def test_pulls_remote_changes_if_remote():
     finder = re.compile(r'git pull --all')
     m = mock.Mock()
-    r = RepoManager(cache_directory="/fooz", executor=m, tools=[None])
-    r.clone_repo(repo_name, Remote("name", "url"))
+    r = RepoManager(cache_directory="/fooz", executor=m, tools=[None],
+                    repo_name=repo_name, remote_repo=Remote("name", "url"))
+    r._clone_repo()
 
     assert len(calls_matching_re(m, finder)) == 1, "Didn't pull updates"
 
@@ -155,21 +160,6 @@ def test_imhotep_instantiation__error_without_commit_info():
         assert False, "Expected a NoCommitInfo exception."
     except NoCommitInfo:
         pass
-
-
-def test_reporter__printing():
-    r = get_reporter(None, no_post=True, commit="asdf")
-    assert type(r) == PrintingReporter
-
-
-def test_reporter__pr():
-    r = get_reporter(None, pr_number=1)
-    assert type(r) == PRReporter
-
-
-def test_reporter__commit():
-    r = get_reporter(None, commit='asdf')
-    assert type(r) == CommitReporter
 
 
 class Thing1(object):

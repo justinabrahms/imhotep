@@ -1,4 +1,5 @@
-from imhotep.reporters import CommitReporter, PRReporter
+from imhotep.reporters import CommitReporter, PRReporter, get_reporter, \
+    PrintingReporter
 from imhotep.testing_utils import Requester
 
 
@@ -22,3 +23,18 @@ def test_pr_url():
 
     assert requester.url == \
            "https://api.github.com/repos/justinabrahms/imhotep/pulls/10/comments"
+
+
+def test_reporter__printing():
+    r = get_reporter(None, no_post=True, commit="asdf")
+    assert type(r) == PrintingReporter
+
+
+def test_reporter__pr():
+    r = get_reporter(None, pr_number=1)
+    assert type(r) == PRReporter
+
+
+def test_reporter__commit():
+    r = get_reporter(None, commit='asdf')
+    assert type(r) == CommitReporter

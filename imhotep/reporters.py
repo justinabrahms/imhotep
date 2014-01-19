@@ -67,3 +67,12 @@ class PRReporter(Reporter):
         if result.status_code >= 400:
             log.error("Error posting line to github. %s", result.json)
         return result
+
+
+def get_reporter(requester, no_post=None, pr_number=None, commit=None):
+    if no_post:
+        return PrintingReporter()
+    elif pr_number:
+        return PRReporter(requester, pr_number)
+    elif commit is not None:
+        return CommitReporter(requester)
