@@ -10,7 +10,7 @@ from tempfile import mkdtemp
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository
 from diff_parser import DiffContextParser
-from pull_requests import get_pr_info
+from shas import get_pr_info, CommitInfo
 from http import GithubRequester, NoGithubCredentials
 from errors import UnknownTools, NoCommitInfo
 
@@ -113,9 +113,6 @@ def load_plugins():
     return tools
 
 
-CommitInfo = namedtuple("CommitInfo", ('commit', 'origin', 'remote_repo'))
-
-
 class Imhotep(object):
     def __init__(self, requester=None, repo_manager=None,
                  repo_name=None, pr_number=None,
@@ -155,7 +152,7 @@ class Imhotep(object):
             repo = self.manager.clone_repo(self.repo_name,
                                            remote_repo=cinfo.remote_repo)
             diff = repo.diff_commit(cinfo.commit,
-                                    compare_point=cinfo.origin_commit)
+                                    compare_point=cinfo.origin)
             results = run_analysis(repo, filenames=set(self.filenames or []))
 
             # Move out to its own thing
@@ -177,7 +174,7 @@ class Imhotep(object):
                 for x in matching_numbers:
                     error_count += 1
                     reporter.report_line(
-                        repo.name, cinfo.origin_commit, entry.result_filename,
+                        repo.name, cinfo.origin, entry.result_filename,
                         x, pos_map[x], violations['%s' % x])
 
                 log.info("%d violations.", error_count)
