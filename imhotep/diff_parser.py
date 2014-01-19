@@ -11,6 +11,7 @@ diff_re = re.compile(
     "\+(?P<added_start>\d+),(?P<added_length>\d+) @@"
 )
 
+
 class Entry(object):
     def __init__(self, origin_filename, result_filename):
         self.origin_filename = origin_filename
@@ -35,12 +36,13 @@ class Entry(object):
     def is_dirty(self):
         return self.result_lines or self.origin_lines
 
-class DiffContextParser:
 
+class DiffContextParser:
     def __init__(self, diff_text):
         self.diff_text = diff_text
 
-    def should_skip_line(self, line):
+    @staticmethod
+    def should_skip_line(line):
         # "index oldsha..newsha permissions" line or..
         # "index 0000000..78ce7f6"
         if re.search(r'index \w+..\w+( \d)?', line):
@@ -54,7 +56,6 @@ class DiffContextParser:
         elif re.search('new file mode.*', line):
             return True
         return False
-
 
     def parse(self):
         """
@@ -74,20 +75,19 @@ class DiffContextParser:
 
         z = None
 
-        before_contexts, after_contexts = [], []
-        lines_before, lines_after = [], []
         before_line_number, after_line_number = 0, 0
-        before_path = after_path = ''
         position = 0
 
         for line in self.diff_text.splitlines():
 
             # New File
-            match = re.search(r'diff .*a/(?P<origin_filename>.*) b/(?P<result_filename>.*)', line)
+            match = re.search(r'diff .*a/(?P<origin_filename>.*) '
+                              r'b/(?P<result_filename>.*)', line)
             if match is not None:
                 if z is not None:
                     result.append(z)
-                z = Entry(match.group('origin_filename'), match.group('result_filename'))
+                z = Entry(match.group('origin_filename'),
+                          match.group('result_filename'))
                 position = 0
                 continue
 

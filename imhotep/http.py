@@ -1,17 +1,22 @@
-import requests
 import json
-from requests.auth import HTTPBasicAuth
 import logging
+
+import requests
+from requests.auth import HTTPBasicAuth
+
 
 log = logging.getLogger(__name__)
 
+
 class NoGithubCredentials(Exception):
     pass
+
 
 class GithubRequester(object):
     """
     Object used for issuing authenticated API calls to GitHub.
     """
+
     def __init__(self, username, password):
         self.username = username
         self.password = password

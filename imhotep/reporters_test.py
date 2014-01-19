@@ -10,7 +10,7 @@ def test_commit_url():
                    message="test")
 
     assert requester.url == \
-        "https://api.github.com/repos/foo/bar/commits/sha/comments"
+           "https://api.github.com/repos/foo/bar/commits/sha/comments"
 
 
 def test_pr_url():
@@ -21,4 +21,4 @@ def test_pr_url():
                    message="test")
 
     assert requester.url == \
-        "https://api.github.com/repos/justinabrahms/imhotep/pulls/10/comments"
+           "https://api.github.com/repos/justinabrahms/imhotep/pulls/10/comments"
