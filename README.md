@@ -1,5 +1,5 @@
-# Imhotep, the peaceful builder.
 ![Imhotep](https://raw.github.com/justinabrahms/imhotep/master/imhotep.png)
+# Imhotep, the peaceful builder.
 ![travis-ci](https://travis-ci.org/justinabrahms/imhotep.png)
 [![Coverage Status](https://coveralls.io/repos/justinabrahms/imhotep/badge.png?branch=master)](https://coveralls.io/r/justinabrahms/imhotep?branch=master)
 
