@@ -26,6 +26,7 @@ class PRInfo(object):
                       url=self.json['head']['repo']['clone_url'])
 
 
+
 def get_pr_info(requester, reponame, number):
     "Returns the PullRequest as a PRInfo object"
     resp = requester.get(
