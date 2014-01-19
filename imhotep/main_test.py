@@ -7,7 +7,7 @@ from main import (load_config, RepoManager, run_analysis,get_tools,
                   UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
-from pull_requests import Remote
+from shas import Remote
 from testing_utils import calls_matching_re
 
 repo_name = 'justinabrahms/imhotep'

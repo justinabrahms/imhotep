@@ -3,7 +3,7 @@ import json
 from collections import namedtuple
 
 from imhotep.testing_utils import fixture_path, Requester
-from imhotep.pull_requests import PRInfo, get_pr_info
+from imhotep.shas import PRInfo, get_pr_info
 
 
 # via https://api.github.com/repos/justinabrahms/imhotep/pulls/10

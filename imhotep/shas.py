@@ -2,6 +2,9 @@ from collections import namedtuple
 
 Remote = namedtuple('Remote', ['name', 'url'])
 
+CommitInfo = namedtuple("CommitInfo", ('commit', 'origin', 'remote_repo'))
+
+
 class PRInfo(object):
     def __init__(self, json):
         self.json = json
@@ -23,6 +26,8 @@ class PRInfo(object):
         return Remote(name=self.json['head']['repo']['owner']['login'],
                       url=self.json['head']['repo']['clone_url'])
 
+    def to_commit_info(self):
+        return CommitInfo(self.base_sha, self.head_sha, self.remote_repo)
 
 def get_pr_info(requester, reponame, number):
     "Returns the PullRequest as a PRInfo object"
