@@ -1,4 +1,6 @@
-![Imhotep](https://f.cloud.github.com/assets/37303/1799404/d09d070a-6b99-11e3-9b31-f7eb9c5a2245.png)
+<p align="center">
+  <img src="https://f.cloud.github.com/assets/37303/1799404/d09d070a-6b99-11e3-9b31-f7eb9c5a2245.png" alt="Imhotep"/>
+</p>
 # Imhotep, the peaceful builder.
 
 ![travis-ci](https://travis-ci.org/justinabrahms/imhotep.png)
