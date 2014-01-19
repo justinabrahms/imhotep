@@ -1,5 +1,5 @@
 <p align="center">
-  <img src"https://raw.github.com/meandavejustice/imhotep/master/imhotep.png" alt="Imhotep"/>
+  <img src"https://github.com/meandavejustice/imhotep/master/imhotep.png?raw=true" alt="Imhotep"/>
 </p>
 # Imhotep, the peaceful builder.
 
