@@ -1,3 +1,8 @@
+import logging
+
+log = logging.getLogger(__name__)
+
+
 class ToolsNotFound(Exception):
     pass
 
@@ -35,6 +40,14 @@ class Repository(object):
         if compare_point is not None:
             self.apply_commit(compare_point)
         return self.executor("cd %s && git diff %s" % (self.dirname, commit))
+
+    def run_tools(self, filenames=set()):
+        results = {}
+        for tool in self.tools:
+            log.debug("running %s" % tool.__class__.__name__)
+            run_results = tool.invoke(self.dirname, filenames=filenames)
+            results.update(run_results)
+        return results
 
     def __unicode__(self):
         return self.name

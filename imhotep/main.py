@@ -83,15 +83,6 @@ class RepoManager(object):
                 self.executor('rm -rf %s' % repo_dir)
 
 
-def run_analysis(repo, filenames=set()):
-    results = {}
-    for tool in repo.tools:
-        log.debug("running %s" % tool.__class__.__name__)
-        run_results = tool.invoke(repo.dirname, filenames=filenames)
-        results.update(run_results)
-    return results
-
-
 def load_config(filename):
     config = {}
     if filename is not None:
@@ -117,13 +108,14 @@ def load_plugins():
 class Imhotep(object):
     def __init__(self, requester=None, repo_manager=None,
                  repo_name=None, pr_number=None,
-                 commit_info=None,
+                 commit_info=None, reporter=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
                  filenames=None, **kwargs):
         # TODO(justinabrahms): kwargs exist until we handle cli params better
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
         self.requester = requester
         self.manager = repo_manager
+        self.reporter = reporter
 
         self.commit_info = commit_info
         self.repo_name = repo_name
@@ -137,51 +129,50 @@ class Imhotep(object):
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
 
-    def get_reporter(self):
-        if self.no_post:
-            return PrintingReporter()
-        if self.pr_number:
-            return PRReporter(self.requester, self.pr_number)
-        elif self.commit is not None:
-            return CommitReporter(self.requester)
-
     def invoke(self):
         cinfo = self.commit_info
-        reporter = self.get_reporter()
 
         try:
             repo = self.manager.clone_repo(self.repo_name,
                                            remote_repo=cinfo.remote_repo)
-            diff = repo.diff_commit(cinfo.commit,
+            diff_txt = repo.diff_commit(cinfo.commit,
                                     compare_point=cinfo.origin)
-            results = run_analysis(repo, filenames=set(self.filenames or []))
+            errors = repo.run_tools(repo, filenames=set(self.filenames or []))
 
-            # Move out to its own thing
-            parser = DiffContextParser(diff)
-            parse_results = parser.parse()
-
-            error_count = 0
-            for entry in parse_results:
-                added_lines = [l.number for l in entry.added_lines]
-                pos_map = {}
-                for x in entry.added_lines:
-                    pos_map[x.number] = x.position
-
-                violations = results.get(entry.result_filename, {})
-                violating_lines = [int(l) for l in violations.keys()]
-
-                matching_numbers = set(added_lines).intersection(
-                    violating_lines)
-                for x in matching_numbers:
-                    error_count += 1
-                    reporter.report_line(
-                        repo.name, cinfo.origin, entry.result_filename,
-                        x, pos_map[x], violations['%s' % x])
-
-                log.info("%d violations.", error_count)
+            diff_objects = DiffContextParser(diff_txt).parse()
+            self.report_errors(repo.name, diff_objects, errors)
         finally:
             self.manager.cleanup()
 
+    def report_errors(self, repo_name, diff_objects, errors):
+        error_count = 0
+        for entry in diff_objects:
+            added_lines = [l.number for l in entry.added_lines]
+            pos_map = {}
+            for x in entry.added_lines:
+                pos_map[x.number] = x.position
+
+            violations = errors.get(entry.result_filename, {})
+            violating_lines = [int(l) for l in violations.keys()]
+
+            matching_numbers = set(added_lines).intersection(
+                violating_lines)
+            for x in matching_numbers:
+                error_count += 1
+                self.reporter.report_line(
+                    repo_name, self.commit_info.origin, entry.result_filename,
+                    x, pos_map[x], violations['%s' % x])
+
+            log.info("%d violations.", error_count)
+
+
+def get_reporter(requester, no_post=None, pr_number=None, commit=None):
+    if no_post:
+        return PrintingReporter()
+    elif pr_number:
+        return PRReporter(requester, pr_number)
+    elif commit is not None:
+        return  CommitReporter(requester)
 
 def gen_imhotep(**kwargs):
     req = GithubRequester(kwargs['github_username'],
@@ -195,6 +186,10 @@ def gen_imhotep(**kwargs):
                           tools=tools,
                           executor=run)
 
+    reporter = get_reporter(req, no_post=kwargs.get('no_post'),
+                            pr_number=kwargs.get('pr_number'),
+                            commit=kwargs.get('commit'))
+
     if kwargs['pr_number']:
         pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'])
         commit_info = pr_info.to_commit_info()
@@ -202,7 +197,7 @@ def gen_imhotep(**kwargs):
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
         commit_info = CommitInfo(kwargs['commit'], None, None)
 
-    return Imhotep(requester=req, repo_manager=manager,
+    return Imhotep(requester=req, repo_manager=manager, reporter=reporter,
                    commit_info=commit_info, **kwargs)
 
 

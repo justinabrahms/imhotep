@@ -3,8 +3,8 @@ import re
 
 import mock
 
-from main import (load_config, RepoManager, run_analysis, get_tools,
-    UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
+from main import (load_config, RepoManager, get_tools,
+    UnknownTools, Imhotep, NoCommitInfo, run, load_plugins, get_reporter)
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
 from shas import Remote
@@ -125,7 +125,7 @@ def test_tools_invoked_on_repo():
     m = mock.Mock()
     m.invoke.return_value = {}
     repo = Repository('name', 'location', [m], None)
-    run_analysis(repo)
+    repo.run_tools()
     assert m.invoke.called
 
 
@@ -135,7 +135,7 @@ def test_tools_merges_tool_results():
     m2 = mock.Mock()
     m2.invoke.return_value = {'b': 2}
     repo = Repository('name', 'location', [m, m2], None)
-    retval = run_analysis(repo)
+    retval = repo.run_tools()
 
     assert 'a' in retval
     assert 'b' in retval
@@ -158,18 +158,18 @@ def test_imhotep_instantiation__error_without_commit_info():
 
 
 def test_reporter__printing():
-    i = Imhotep(no_post=True, commit="asdf")
-    assert type(i.get_reporter()) == PrintingReporter
+    r = get_reporter(None, no_post=True, commit="asdf")
+    assert type(r) == PrintingReporter
 
 
 def test_reporter__pr():
-    i = Imhotep(pr_number=1)
-    assert type(i.get_reporter()) == PRReporter
+    r = get_reporter(None, pr_number=1)
+    assert type(r) == PRReporter
 
 
 def test_reporter__commit():
-    i = Imhotep(commit='asdf')
-    assert type(i.get_reporter()) == CommitReporter
+    r = get_reporter(None, commit='asdf')
+    assert type(r) == CommitReporter
 
 
 class Thing1(object):
