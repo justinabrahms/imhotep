@@ -23,14 +23,14 @@ class PRInfo(object):
 
     @property
     def remote_repo(self):
-        return Remote(name=self.json['head']['repo']['owner']['login'],
-                      url=self.json['head']['repo']['clone_url'])
+        remote = None
+        if self.has_remote_repo:
+            remote = Remote(name=self.json['head']['repo']['owner']['login'],
+                            url=self.json['head']['repo']['clone_url'])
+        return remote
 
     def to_commit_info(self):
-        remote_repo = None
-        if self.has_remote_repo:
-            remote_repo = self.remote_repo
-        return CommitInfo(self.base_sha, self.head_sha, remote_repo)
+        return CommitInfo(self.base_sha, self.head_sha, self.remote_repo)
 
 
 def get_pr_info(requester, reponame, number):
