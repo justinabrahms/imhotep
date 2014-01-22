@@ -49,6 +49,11 @@ def test_pr_info_to_commit_info():
     assert commit_info.remote_repo.url == 'https://github.com/scottjab/imhotep.git'
 
 
+def test_pr_info_to_commit_info_no_remote():
+    commit_info = non_remote_pr.to_commit_info()
+    assert commit_info.remote_repo is None
+
+
 def test_pr_info_remote_repo():
     remote = remote_pr.remote_repo
     assert remote.name == 'scottjab'

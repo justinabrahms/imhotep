@@ -27,7 +27,10 @@ class PRInfo(object):
                       url=self.json['head']['repo']['clone_url'])
 
     def to_commit_info(self):
-        return CommitInfo(self.base_sha, self.head_sha, self.remote_repo)
+        remote_repo = None
+        if self.has_remote_repo:
+            remote_repo = self.remote_repo
+        return CommitInfo(self.base_sha, self.head_sha, remote_repo)
 
 
 def get_pr_info(requester, reponame, number):
