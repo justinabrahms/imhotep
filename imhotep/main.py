@@ -132,7 +132,9 @@ class Imhotep(object):
         self.origin_commit = origin_commit
         self.no_post = no_post
         self.debug = debug
-        self.filenames = filenames
+        if filenames is None:
+            filenames = []
+        self.requested_filenames = set(filenames)
 
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
@@ -145,6 +147,12 @@ class Imhotep(object):
         elif self.commit is not None:
             return CommitReporter(self.requester)
 
+    def get_filenames(self, entries, requested_set=None):
+        filenames = set([x.result_filename for x in entries])
+        if requested_set is not None and len(requested_set):
+            filenames = requested_set.intersection(filenames)
+        return list(filenames)
+
     def invoke(self):
         cinfo = self.commit_info
         reporter = self.get_reporter()
@@ -154,11 +162,13 @@ class Imhotep(object):
                                            remote_repo=cinfo.remote_repo)
             diff = repo.diff_commit(cinfo.commit,
                                     compare_point=cinfo.origin)
-            results = run_analysis(repo, filenames=set(self.filenames or []))
 
             # Move out to its own thing
             parser = DiffContextParser(diff)
             parse_results = parser.parse()
+            filenames = self.get_filenames(parse_results,
+                                           self.requested_filenames)
+            results = run_analysis(repo, filenames=filenames)
 
             error_count = 0
             for entry in parse_results:
