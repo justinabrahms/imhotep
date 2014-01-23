@@ -26,8 +26,11 @@ pip install -r requirements.txt
 
 You'll also need to install the plugins you'd like to run. Examples
 include [jshint](https://github.com/justinabrahms/imhotep_jshint),
-[pep8](https://github.com/justinabrahms/imhotep_pep8), and
-[pylint](https://github.com/justinabrahms/imhotep_pylint). You can
+[pep8](https://github.com/justinabrahms/imhotep_pep8), 
+[pylint](https://github.com/justinabrahms/imhotep_pylint),
+[rubocop](https://github.com/scottjab/imhotep_rubocop),
+[foodcritic](https://github.com/scottjab/imhotep_foodcritic),
+and [jsl](https://github.com/mghayes/imhotep_jsl). You can
 install those with pip. Example: `pip install imhotep_jshint`.
 
 ## Usage
