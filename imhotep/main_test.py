@@ -9,6 +9,7 @@ from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
 from shas import Remote
 from testing_utils import calls_matching_re
+from diff_parser import Entry
 
 repo_name = 'justinabrahms/imhotep'
 
@@ -213,3 +214,36 @@ def test_load_plugins():
         plugins = load_plugins()
         assert not isinstance(plugins[0], EP)
         assert 2 == len(plugins)
+
+def test_imhotep_get_filenames():
+    e1 = Entry('a.txt', 'a.txt')
+    i = Imhotep(pr_number=1)
+    filenames = i.get_filenames([e1])
+    assert filenames == ['a.txt']
+
+
+def test_imhotep_get_filenames_empty():
+    i = Imhotep(pr_number=1)
+    filenames = i.get_filenames([])
+    assert filenames == []
+
+
+def test_imhotep_get_filenames_requested():
+    e1 = Entry('a.txt', 'a.txt')
+    i = Imhotep(pr_number=1)
+    filenames = i.get_filenames([e1], set(['a.txt']))
+    assert filenames == ['a.txt']
+
+
+def test_imhotep_get_filenames_requested_non_existent():
+    e1 = Entry('a.txt', 'a.txt')
+    i = Imhotep(pr_number=1)
+    filenames = i.get_filenames([e1], set(['non-existent.txt']))
+    assert filenames == []
+
+
+def test_imhotep_get_filenames_requested_destination():
+    e1 = Entry('a.txt', 'b.txt')
+    i = Imhotep(pr_number=1)
+    filenames = i.get_filenames([e1], set(['b.txt']))
+    assert filenames == ['b.txt']
