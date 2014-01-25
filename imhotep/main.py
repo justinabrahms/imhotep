@@ -4,6 +4,8 @@ import logging
 import os
 import subprocess
 import sys
+import glob
+
 from tempfile import mkdtemp
 
 import pkg_resources
@@ -53,6 +55,13 @@ class RepoManager(object):
                 self.cache_directory, dired_repo_name))
         return dirname
 
+    def get_linter_config(self, dirname):
+        files = glob.glob("%s/.imhotep-*.conf" % dirname)
+        if len(files) > 0:
+            log.debug("Found linter config: %s " % " ".join(files))
+            return files
+        return None
+
     def clone_repo(self, repo_name, remote_repo):
         """Clones the given repo and returns the Repository object."""
         dirname = self.clone_dir(repo_name)
@@ -83,11 +92,13 @@ class RepoManager(object):
                 self.executor('rm -rf %s' % repo_dir)
 
 
-def run_analysis(repo, filenames=set()):
+def run_analysis(repo, filenames=set(), linter_configs=set()):
     results = {}
     for tool in repo.tools:
         log.debug("running %s" % tool.__class__.__name__)
-        run_results = tool.invoke(repo.dirname, filenames=filenames)
+        run_results = tool.invoke(repo.dirname,
+                                  filenames=filenames,
+                                  linter_configs=linter_configs)
         results.update(run_results)
     return results
 
@@ -168,7 +179,10 @@ class Imhotep(object):
             parse_results = parser.parse()
             filenames = self.get_filenames(parse_results,
                                            self.requested_filenames)
-            results = run_analysis(repo, filenames=filenames)
+            linter_configs = self.manager.get_linter_config(repo.dirname)
+            results = run_analysis(repo,
+                                   filenames=filenames,
+                                   linter_configs=linter_configs)
 
             error_count = 0
             for entry in parse_results:

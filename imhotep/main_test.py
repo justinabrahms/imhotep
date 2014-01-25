@@ -74,6 +74,12 @@ def test_clone_dir_cached():
     assert val.startswith('/weeble/wobble/justinabrahms__imhotep')
 
 
+def test_repo_configs():
+    r = RepoManager(cache_directory="/weeble/wobble/", tools=[None])
+    dirname = r.clone_dir(repo_name)
+    assert r.get_linter_config(dirname) is None
+
+
 def test_clone_adds_to_cleanup_dict():
     m = mock.Mock()
     r = RepoManager(cache_directory="/weeble/wobble/", executor=m,

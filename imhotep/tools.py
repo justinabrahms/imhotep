@@ -17,7 +17,7 @@ class Tool(object):
         self.executor = command_executor
         self.filenames = filenames
 
-    def invoke(self, dirname, filenames=set()):
+    def invoke(self, dirname, filenames=set(), linter_configs=set()):
         """
         Main entrypoint for all plugins.
 
@@ -65,7 +65,7 @@ class Tool(object):
         """
         raise NotImplementedError()
 
-    def get_command(self, dirname):
+    def get_command(self, dirname, config_files=set()):
         """
         Returns the command to run for linting. It is piped a list of files to
         run on over stdin.
