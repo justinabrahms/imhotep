@@ -74,10 +74,20 @@ def test_clone_dir_cached():
     assert val.startswith('/weeble/wobble/justinabrahms__imhotep')
 
 
-def test_repo_configs():
+def test_repo_configs_dont_exist():
     r = RepoManager(cache_directory="/weeble/wobble/", tools=[None])
     dirname = r.clone_dir(repo_name)
-    assert r.get_linter_config(dirname) is None
+    assert len(r.get_linter_config(dirname)) == 0
+
+
+def test_repo_configs_exist():
+    r = RepoManager(cache_directory="/weeble/wabble/", tools=[None])
+    glob_return = ['/weeble/wabble/.imhotep-example.conf',
+                   '/weeble/wabble/.imhotep-pep8.conf']
+    with mock.patch('glob.glob') as glob_mock:
+        glob_mock.return_value = glob_return
+        dirname = r.clone_dir(repo_name)
+        assert len(r.get_linter_config(dirname)) == 2
 
 
 def test_clone_adds_to_cleanup_dict():

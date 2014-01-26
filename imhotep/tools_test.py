@@ -13,7 +13,7 @@ class ExampleTool(Tool):
     def get_file_extensions(self):
         return [".exe"]
 
-    def get_command(self, dirname):
+    def get_command(self, dirname, linter_configs=set()):
         return "example-cmd"
 
 

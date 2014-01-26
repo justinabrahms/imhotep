@@ -60,7 +60,7 @@ class RepoManager(object):
         if len(files) > 0:
             log.debug("Found linter config: %s " % " ".join(files))
             return files
-        return None
+        return set()
 
     def clone_repo(self, repo_name, remote_repo):
         """Clones the given repo and returns the Repository object."""
