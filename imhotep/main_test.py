@@ -130,17 +130,17 @@ def test_pulls_remote_changes_if_remote():
 
 
 def test_tools_invoked_on_repo():
-    m = mock.Mock()
+    m = mock.MagicMock()
     m.invoke.return_value = {}
-    repo = Repository('name', 'location', [ExampleTool], None)
+    repo = Repository('name', 'location', [m], None)
     run_analysis(repo)
     assert m.invoke.called
 
 
 def test_tools_merges_tool_results():
-    m = mock.Mock()
+    m = mock.MagicMock()
     m.invoke.return_value = {'a': 1}
-    m2 = mock.Mock()
+    m2 = mock.MagicMock()
     m2.invoke.return_value = {'b': 2}
     repo = Repository('name', 'location', [m, m2], None)
     retval = run_analysis(repo)
