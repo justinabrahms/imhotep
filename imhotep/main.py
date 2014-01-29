@@ -96,8 +96,13 @@ def run_analysis(repo, filenames=set(), linter_configs=set()):
     results = {}
     for tool in repo.tools:
         log.debug("running %s" % tool.__class__.__name__)
-        configs = tool.get_configs()
+        configs = {}
+        try:
+            configs = tool.get_configs()
+        except AttributeError:
+            pass
         linter_configs = find_config(repo.dirname, configs)
+        log.debug("Tool configs %s, found configs %s", configs, linter_configs)
         run_results = tool.invoke(repo.dirname,
                                   filenames=filenames,
                                   linter_configs=linter_configs)
@@ -181,10 +186,8 @@ class Imhotep(object):
             parse_results = parser.parse()
             filenames = self.get_filenames(parse_results,
                                            self.requested_filenames)
-            linter_configs = self.manager.get_linter_config(repo.dirname)
             results = run_analysis(repo,
-                                   filenames=filenames,
-                                   linter_configs=linter_configs)
+                                   filenames=filenames)
 
             error_count = 0
             for entry in parse_results:
