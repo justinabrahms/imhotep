@@ -17,6 +17,9 @@ class Tool(object):
         self.executor = command_executor
         self.filenames = filenames
 
+    def get_configs(self):
+        return list()
+
     def invoke(self, dirname, filenames=set(), linter_configs=set()):
         """
         Main entrypoint for all plugins.

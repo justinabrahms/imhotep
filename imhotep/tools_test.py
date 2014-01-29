@@ -17,6 +17,12 @@ class ExampleTool(Tool):
         return "example-cmd"
 
 
+def test_tool_configs():
+    m = mock.Mock()
+    t = ExampleTool(m)
+    assert len(t.get_configs()) == 0
+
+
 def test_find_searches_dirname():
     m = mock.Mock()
     m.return_value = ""

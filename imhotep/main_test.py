@@ -3,10 +3,11 @@ import re
 
 import mock
 
-from main import (load_config, RepoManager, run_analysis, get_tools,
-    UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
+from main import (load_config, RepoManager, find_config, run_analysis,
+    get_tools, UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
+from tools_test import ExampleTool
 from shas import Remote
 from testing_utils import calls_matching_re
 from diff_parser import Entry
@@ -74,20 +75,10 @@ def test_clone_dir_cached():
     assert val.startswith('/weeble/wobble/justinabrahms__imhotep')
 
 
-def test_repo_configs_dont_exist():
+def test_find_config():
     r = RepoManager(cache_directory="/weeble/wobble/", tools=[None])
     dirname = r.clone_dir(repo_name)
-    assert len(r.get_linter_config(dirname)) == 0
-
-
-def test_repo_configs_exist():
-    r = RepoManager(cache_directory="/weeble/wabble/", tools=[None])
-    glob_return = ['/weeble/wabble/.imhotep-example.conf',
-                   '/weeble/wabble/.imhotep-pep8.conf']
-    with mock.patch('glob.glob') as glob_mock:
-        glob_mock.return_value = glob_return
-        dirname = r.clone_dir(repo_name)
-        assert len(r.get_linter_config(dirname)) == 2
+    assert len(find_config(dirname, list())) == 0
 
 
 def test_clone_adds_to_cleanup_dict():
@@ -141,7 +132,7 @@ def test_pulls_remote_changes_if_remote():
 def test_tools_invoked_on_repo():
     m = mock.Mock()
     m.invoke.return_value = {}
-    repo = Repository('name', 'location', [m], None)
+    repo = Repository('name', 'location', [ExampleTool], None)
     run_analysis(repo)
     assert m.invoke.called
 

@@ -55,13 +55,6 @@ class RepoManager(object):
                 self.cache_directory, dired_repo_name))
         return dirname
 
-    def get_linter_config(self, dirname):
-        files = glob.glob("%s/.imhotep-*.conf" % dirname)
-        if len(files) > 0:
-            log.debug("Found linter config: %s " % " ".join(files))
-            return files
-        return set()
-
     def clone_repo(self, repo_name, remote_repo):
         """Clones the given repo and returns the Repository object."""
         dirname = self.clone_dir(repo_name)
@@ -92,10 +85,19 @@ class RepoManager(object):
                 self.executor('rm -rf %s' % repo_dir)
 
 
+def find_config(dirname, config_filenames):
+    configs = []
+    for filename in config_filenames:
+        configs += glob.glob('%s/%s' % (dirname, filename))
+    return set(configs)
+
+
 def run_analysis(repo, filenames=set(), linter_configs=set()):
     results = {}
     for tool in repo.tools:
         log.debug("running %s" % tool.__class__.__name__)
+        configs = tool.get_configs()
+        linter_configs = find_config(repo.dirname, configs)
         run_results = tool.invoke(repo.dirname,
                                   filenames=filenames,
                                   linter_configs=linter_configs)
