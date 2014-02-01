@@ -89,7 +89,7 @@ def find_config(dirname, config_filenames):
     configs = set()
     for filename in config_filenames:
         configs += glob.glob('%s/%s' % (dirname, filename))
-    return set(configs)
+    return configs
 
 
 def run_analysis(repo, filenames=set(), linter_configs=set()):
