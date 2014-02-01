@@ -4,10 +4,10 @@ import re
 import mock
 
 from main import (load_config, RepoManager, find_config, run_analysis,
-    get_tools, UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
+                  get_tools, UnknownTools, Imhotep, NoCommitInfo, run,
+                  load_plugins)
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
-from tools_test import ExampleTool
 from shas import Remote
 from testing_utils import calls_matching_re
 from diff_parser import Entry

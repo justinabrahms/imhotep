@@ -40,8 +40,9 @@ class Tool(object):
                                   self.get_file_extensions()])
 
         cmd = 'find %s %s | xargs %s' % (
-            dirname, extensions, self.get_command(dirname,
-                                                  linter_configs=linter_configs))
+            dirname, extensions, self.get_command(
+                dirname,
+                linter_configs=linter_configs))
         result = self.executor(cmd)
         for line in result.split('\n'):
             output = self.process_line(dirname, line)
