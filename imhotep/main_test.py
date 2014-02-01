@@ -3,8 +3,9 @@ import re
 
 import mock
 
-from main import (load_config, RepoManager, run_analysis, get_tools,
-    UnknownTools, Imhotep, NoCommitInfo, run, load_plugins)
+from main import (load_config, RepoManager, find_config, run_analysis,
+                  get_tools, UnknownTools, Imhotep, NoCommitInfo, run,
+                  load_plugins)
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, AuthenticatedRepository, ToolsNotFound
 from shas import Remote
@@ -74,6 +75,12 @@ def test_clone_dir_cached():
     assert val.startswith('/weeble/wobble/justinabrahms__imhotep')
 
 
+def test_find_config():
+    r = RepoManager(cache_directory="/weeble/wobble/", tools=[None])
+    dirname = r.clone_dir(repo_name)
+    assert len(find_config(dirname, list())) == 0
+
+
 def test_clone_adds_to_cleanup_dict():
     m = mock.Mock()
     r = RepoManager(cache_directory="/weeble/wobble/", executor=m,
@@ -123,7 +130,7 @@ def test_pulls_remote_changes_if_remote():
 
 
 def test_tools_invoked_on_repo():
-    m = mock.Mock()
+    m = mock.MagicMock()
     m.invoke.return_value = {}
     repo = Repository('name', 'location', [m], None)
     run_analysis(repo)
@@ -131,9 +138,9 @@ def test_tools_invoked_on_repo():
 
 
 def test_tools_merges_tool_results():
-    m = mock.Mock()
+    m = mock.MagicMock()
     m.invoke.return_value = {'a': 1}
-    m2 = mock.Mock()
+    m2 = mock.MagicMock()
     m2.invoke.return_value = {'b': 2}
     repo = Repository('name', 'location', [m, m2], None)
     retval = run_analysis(repo)

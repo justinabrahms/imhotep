@@ -13,8 +13,14 @@ class ExampleTool(Tool):
     def get_file_extensions(self):
         return [".exe"]
 
-    def get_command(self, dirname):
+    def get_command(self, dirname, linter_configs=set()):
         return "example-cmd"
+
+
+def test_tool_configs():
+    m = mock.Mock()
+    t = ExampleTool(m)
+    assert len(t.get_configs()) == 0
 
 
 def test_find_searches_dirname():
