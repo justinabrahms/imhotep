@@ -19,6 +19,7 @@ install the required packages.
 
 ```
 git clone git://github.com/justinabrahms/imhotep.git
+cd imhotep
 virtualenv env
 . env/bin/activate
 pip install -r requirements.txt
