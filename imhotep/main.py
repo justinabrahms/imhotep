@@ -86,10 +86,10 @@ class RepoManager(object):
 
 
 def find_config(dirname, config_filenames):
-    configs = set()
+    configs = []
     for filename in config_filenames:
         configs += glob.glob('%s/%s' % (dirname, filename))
-    return configs
+    return set(configs)
 
 
 def run_analysis(repo, filenames=set(), linter_configs=set()):
