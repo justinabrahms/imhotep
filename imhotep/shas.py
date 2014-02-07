@@ -26,7 +26,7 @@ class PRInfo(object):
         remote = None
         if self.has_remote_repo:
             remote = Remote(name=self.json['head']['repo']['owner']['login'],
-                            url=self.json['head']['repo']['clone_url'])
+                            url=self.json['head']['repo']['ssh_url'])
         return remote
 
     def to_commit_info(self):
