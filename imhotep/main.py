@@ -4,6 +4,8 @@ import logging
 import os
 import subprocess
 import sys
+import glob
+
 from tempfile import mkdtemp
 
 import pkg_resources
@@ -83,11 +85,27 @@ class RepoManager(object):
                 self.executor('rm -rf %s' % repo_dir)
 
 
-def run_analysis(repo, filenames=set()):
+def find_config(dirname, config_filenames):
+    configs = []
+    for filename in config_filenames:
+        configs += glob.glob('%s/%s' % (dirname, filename))
+    return set(configs)
+
+
+def run_analysis(repo, filenames=set(), linter_configs=set()):
     results = {}
     for tool in repo.tools:
         log.debug("running %s" % tool.__class__.__name__)
-        run_results = tool.invoke(repo.dirname, filenames=filenames)
+        configs = {}
+        try:
+            configs = tool.get_configs()
+        except AttributeError:
+            pass
+        linter_configs = find_config(repo.dirname, configs)
+        log.debug("Tool configs %s, found configs %s", configs, linter_configs)
+        run_results = tool.invoke(repo.dirname,
+                                  filenames=filenames,
+                                  linter_configs=linter_configs)
         results.update(run_results)
     return results
 
@@ -168,7 +186,8 @@ class Imhotep(object):
             parse_results = parser.parse()
             filenames = self.get_filenames(parse_results,
                                            self.requested_filenames)
-            results = run_analysis(repo, filenames=filenames)
+            results = run_analysis(repo,
+                                   filenames=filenames)
 
             error_count = 0
             for entry in parse_results:

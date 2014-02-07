@@ -19,9 +19,11 @@ install the required packages.
 
 ```
 git clone git://github.com/justinabrahms/imhotep.git
+cd imhotep
 virtualenv env
 . env/bin/activate
 pip install -r requirements.txt
+pip install -e .
 ```
 
 You'll also need to install the plugins you'd like to run. Examples
@@ -42,7 +44,7 @@ two ways: either on a single commit or on a pull request.
 
 ### Commenting on a pull request
 ```
-python imhotep.py \
+python imhotep/main.py \
        --repo_name="justinabrahms/imhotep" \
        --github-username="your_username" \
        --github-password="a_sha_generated_by_github" \
@@ -51,7 +53,7 @@ python imhotep.py \
 
 ### Commenting on a single commit
 ```
-python imhotep.py \
+python imhotep/main.py \
        --repo_name="justinabrahms/imhotep" \
        --github-username="your_username" \
        --github-password="a_sha_generated_by_github" \
@@ -66,7 +68,7 @@ access token and use that for the `--github-password` above.
 
 ### Full Usage Info
 ```
-usage: imhotep [-h] [--config-file CONFIG_FILE] --repo_name REPO_NAME
+usage: imhotep/main.py [-h] [--config-file CONFIG_FILE] --repo_name REPO_NAME
                [--commit COMMIT] [--origin-commit ORIGIN_COMMIT]
                [--filenames FILENAMES [FILENAMES ...]] [--debug]
                [--github-username GITHUB_USERNAME]
@@ -101,6 +103,10 @@ optional arguments:
   --cache-directory CACHE_DIRECTORY
                         Path to directory to cache the repository
 ```
+
+Note: if you get a error where the plugin cannot find `imhotep.tools`, make
+sure you installed imhotep into your virtualenv with `pip install -e .`. See
+the [Installation](#installation) instructions above.
 
 ## Linter Support
 
