@@ -46,7 +46,7 @@ def test_pr_info_to_commit_info():
     assert commit_info.commit == '02c774e4a8d74154468211b14f631748c1d23ef6'
     assert commit_info.origin == '9216c7b61c6dbf547a22e5a5ad282252acc9735f'
     assert commit_info.remote_repo.name == 'scottjab'
-    assert commit_info.remote_repo.url == 'https://github.com/scottjab/imhotep.git'
+    assert commit_info.remote_repo.url == 'git@github.com:scottjab/imhotep.git'
 
 
 def test_pr_info_to_commit_info_no_remote():
@@ -57,7 +57,7 @@ def test_pr_info_to_commit_info_no_remote():
 def test_pr_info_remote_repo():
     remote = remote_pr.remote_repo
     assert remote.name == 'scottjab'
-    assert remote.url == 'https://github.com/scottjab/imhotep.git'
+    assert remote.url == 'git@github.com:scottjab/imhotep.git'
 
 
 def test_pr_info():
