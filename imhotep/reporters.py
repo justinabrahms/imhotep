@@ -30,11 +30,11 @@ class GitHubReporter(Reporter):
     def __init__(self):
         self._comments = []
 
-    def clean_already_reported(self, comments, file_name, line_number,
+    def clean_already_reported(self, comments, file_name, position,
                                message):
         for comment in comments:
             if ((comment['path'] == file_name
-                 and comment['position'] == line_number
+                 and comment['position'] == position
                  and comment['user']['login'] == self.requester.username)):
 
                 clean_message = []
@@ -69,7 +69,7 @@ class CommitReporter(GitHubReporter):
             % (repo_name, commit))
         comments = self.get_comments()
         message = self.clean_already_reported(comments, file_name,
-                                              line_number, message)
+                                              position, message)
         payload = {
             'body': message,
             'sha': commit,
@@ -95,7 +95,7 @@ class PRReporter(GitHubReporter):
             % (repo_name, self.pr_number))
         comments = self.get_comments()
         message = self.clean_already_reported(comments, file_name,
-                                              line_number, message)
+                                              position, message)
         if not message:
             log.debug('Message already reported')
             return
