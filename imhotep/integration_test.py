@@ -20,9 +20,13 @@ from imhotep.reporters import PRReporter
 ghu = os.getenv('GITHUB_USERNAME')
 ghp = os.getenv('GITHUB_PASSWORD')
 
+github_not_set = not ghu or not ghp
 
-@pytest.mark.skipif(not ghu or not ghp,
-                    reason="must specify github credentials as env var")
+require_github_creds = pytest.mark.skipif(
+    github_not_set, reason="must specify github credentials as env var")
+
+
+@require_github_creds
 def test_github_post():
     repo = 'imhotepbot/sacrificial-integration-tests'
     pr = 1
