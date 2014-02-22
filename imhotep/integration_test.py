@@ -47,3 +47,27 @@ def test_github_post():
         for comment in comments:
             req.delete('https://api.github.com/repos/%s/pulls/comments/%s' % (
                 repo, comment['id']))
+
+
+@require_github_creds
+def test_dont_post_duplicate_comments():
+    repo = 'imhotepbot/sacrificial-integration-tests'
+    pr = 1
+    test_str = 'integration test error name'
+    req = GithubRequester(ghu, ghp)
+    r = PRReporter(req, pr)
+    args = [repo, 'da6a127', 'foo.py', 2, 3, test_str]
+
+    r.report_line(*args)
+    r.report_line(*args)  # should dedupe.
+
+    comment_url = 'https://api.github.com/repos/%s/pulls/%s/comments' % (
+        repo, pr)
+    comments = req.get(comment_url).json
+    posted = [x for x in comments if test_str in x['body']]
+
+    try:
+        assert len(posted) == 1
+    finally:
+        for comment in comments:
+            req.delete('%s/%s' % (comment_url, comment['id']))
