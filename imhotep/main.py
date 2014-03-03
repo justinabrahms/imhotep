@@ -1,4 +1,3 @@
-from collections import namedtuple
 import json
 import logging
 import os
@@ -6,12 +5,11 @@ import subprocess
 import sys
 import glob
 
-from tempfile import mkdtemp
 
 import pkg_resources
 
+from repomanagers import RepoManager
 from reporters import PrintingReporter, CommitReporter, PRReporter
-from repositories import Repository, AuthenticatedRepository
 from diff_parser import DiffContextParser
 from shas import get_pr_info, CommitInfo
 from http import GithubRequester, NoGithubCredentials
@@ -26,85 +24,6 @@ def run(cmd, cwd='.'):
     return subprocess.Popen(
         [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd).communicate()[0]
 
-
-class RepoManager(object):
-    """
-    Manages creation and deletion of `Repository` objects.
-    """
-    to_cleanup = {}
-
-    def __init__(self, authenticated=False, cache_directory=None,
-                 tools=None, executor=None, shallow_clone=False):
-        self.should_cleanup = cache_directory is None
-        self.authenticated = authenticated
-        self.cache_directory = cache_directory
-        self.tools = tools or []
-        self.executor = executor
-        self.shallow_clone = shallow_clone
-
-    def get_repo_class(self):
-        if self.authenticated:
-            return AuthenticatedRepository
-        return Repository
-
-    def clone_dir(self, repo_name):
-        dired_repo_name = repo_name.replace('/', '__')
-        if not self.cache_directory:
-            dirname = mkdtemp(suffix=dired_repo_name)
-        else:
-            dirname = os.path.abspath("%s/%s" % (
-                self.cache_directory, dired_repo_name))
-        return dirname
-
-    def clone_repo(self, repo_name, remote_repo, ref):
-        """Clones the given repo and returns the Repository object."""
-        dirname = self.clone_dir(repo_name)
-        self.to_cleanup[repo_name] = dirname
-        klass = self.get_repo_class()
-        repo = klass(repo_name, dirname, self.tools, self.executor, shallow=self.shallow_clone)
-        if self.shallow_clone:
-            remote_name = 'origin'
-            log.debug("Shallow cloning.")
-            download_location = repo.download_location
-            log.debug("Creating stub git repo at %s" % (dirname))
-            self.executor("mkdir -p %s" % (dirname, ))
-            self.executor("cd %s && git init" % (dirname, ))
-            log.debug("Adding origin repo %s " % (download_location))
-            self.executor("cd %s && git remote add origin %s" % (dirname,
-                                                                 download_location))
-            if remote_repo:
-                log.debug("Adding remote from %s", remote_repo.url)
-                self.executor("cd %s && git remote add %s %s" % (dirname,
-                                                                 remote_repo.name,
-                                                                 remote_repo.url))
-                remote_name = remote_repo.name
-            log.debug("Fetching HEAD")
-            self.executor("cd %s && git fetch --depth=1 origin HEAD" % dirname)
-            log.debug("Fetching %s", ref)
-            self.executor("cd %s && git fetch --depth=1 %s %s" % (dirname, remote_name, ref))
-        else:
-            if os.path.isdir("%s/.git" % dirname):
-                log.debug("Updating %s to %s", repo.download_location, dirname)
-                self.executor(
-                    "cd %s && git checkout master && git pull --all" % dirname)
-            else:
-                log.debug("Cloning %s to %s", repo.download_location, dirname)
-                self.executor(
-                    "git clone %s %s" % (repo.download_location, dirname))
-
-            if remote_repo is not None:
-                log.debug("Pulling remote branch from %s", remote_repo.url)
-                self.executor("cd %s && git remote add %s %s" % (dirname,
-                                                                 remote_repo.name,
-                                                                 remote_repo.url))
-                self.executor("cd %s && git pull --all" % dirname)
-        return repo
-
-    def cleanup(self):
-        if self.should_cleanup:
-            for repo_dir in self.to_cleanup.values():
-                log.debug("Cleaning up %s", repo_dir)
-                self.executor('rm -rf %s' % repo_dir)
 
 
 def find_config(dirname, config_filenames):
