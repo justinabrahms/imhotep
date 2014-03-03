@@ -98,7 +98,7 @@ class PRReporter(GitHubReporter):
                                               line_number, message)
         if not message:
             log.debug('Message already reported')
-            return
+            return None
         payload = {
             'body': message,
             'commit_id': commit,  # sha

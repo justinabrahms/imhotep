@@ -85,7 +85,7 @@ def test_clone_adds_to_cleanup_dict():
     m = mock.Mock()
     r = RepoManager(cache_directory="/weeble/wobble/", executor=m,
                     tools=[None])
-    r.clone_repo(repo_name, None)
+    r.clone_repo(repo_name, None, None)
     directory = r.clone_dir(repo_name)
     assert directory in r.to_cleanup[repo_name]
 
@@ -97,7 +97,7 @@ def test_updates_if_existing_repo():
 
     with mock.patch('os.path.isdir') as isdir:
         isdir.return_value = True
-        r.clone_repo(repo_name, None)
+        r.clone_repo(repo_name, None, None)
 
     assert len(calls_matching_re(m, finder)) == 0, "Shouldn't git clone"
 
@@ -106,7 +106,7 @@ def test_clones_if_no_existing_repo():
     finder = re.compile(r'git clone')
     m = mock.Mock()
     r = RepoManager(cache_directory="/fooz", executor=m, tools=[None])
-    r.clone_repo(repo_name, None)
+    r.clone_repo(repo_name, None, None)
 
     assert len(calls_matching_re(m, finder)) == 1, "Didn't git clone"
 
@@ -115,7 +115,7 @@ def test_adds_remote_if_pr_is_remote():
     finder = re.compile(r'git remote add name url')
     m = mock.Mock()
     r = RepoManager(cache_directory="/fooz", executor=m, tools=[None])
-    r.clone_repo(repo_name, Remote("name", "url"))
+    r.clone_repo(repo_name, Remote("name", "url"), None)
 
     assert len(calls_matching_re(m, finder)) == 1, "Remote not added"
 
@@ -124,7 +124,7 @@ def test_pulls_remote_changes_if_remote():
     finder = re.compile(r'git pull --all')
     m = mock.Mock()
     r = RepoManager(cache_directory="/fooz", executor=m, tools=[None])
-    r.clone_repo(repo_name, Remote("name", "url"))
+    r.clone_repo(repo_name, Remote("name", "url"), None)
 
     assert len(calls_matching_re(m, finder)) == 1, "Didn't pull updates"
 

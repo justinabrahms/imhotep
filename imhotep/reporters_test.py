@@ -27,6 +27,21 @@ def test_pr_url():
            "https://api.github.com/repos/justinabrahms/imhotep/pulls/10/comments"
 
 
+def test_pr_already_reported():
+    requester = mock.MagicMock()
+    requester.username = 'magicmock'
+    comments = [{'path': 'foo.py',
+                'position': 2,
+                'body': 'Get that out',
+                'user': {'login': 'magicmock'}}]
+    pr = PRReporter(requester, 10)
+    pr._comments = comments
+    result = pr.report_line(repo_name='justinabrahms/imhotep', commit='sha',
+                            file_name='foo.py', line_number=10, position=2,
+                            message='Get that out')
+    assert result is None
+
+
 def test_get_comments_no_cache():
     return_data = {'foo': 'bar'}
     requester = mock.MagicMock()

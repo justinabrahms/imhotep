@@ -159,7 +159,7 @@ class Imhotep(object):
                  repo_name=None, pr_number=None,
                  commit_info=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
-                 filenames=None, **kwargs):
+                 filenames=None, shallow_clone=False, **kwargs):
         # TODO(justinabrahms): kwargs exist until we handle cli params better
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
         self.requester = requester
@@ -175,11 +175,7 @@ class Imhotep(object):
         if filenames is None:
             filenames = []
         self.requested_filenames = set(filenames)
-        if kwargs['shallow'] is None:
-            self.shallow = False
-        else:
-            self.shallow = kwargs['shallow']
-
+        self.shallow = shallow_clone
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
 
@@ -259,8 +255,13 @@ def gen_imhotep(**kwargs):
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
         commit_info = CommitInfo(kwargs['commit'], None, None)
     log.debug("Shallow: %s ", kwargs['shallow'])
-    return Imhotep(requester=req, repo_manager=manager,
-                   commit_info=commit_info, **kwargs)
+    if kwargs['shallow']:
+        shallow_clone = kwargs['shallow']
+    return Imhotep(requester=req,
+                   repo_manager=manager,
+                   commit_info=commit_info,
+                   shallow_clone=shallow_clone,
+                   **kwargs)
 
 
 def get_tools(whitelist, known_plugins):
