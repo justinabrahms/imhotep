@@ -34,12 +34,13 @@ class RepoManager(object):
     to_cleanup = {}
 
     def __init__(self, authenticated=False, cache_directory=None,
-                 tools=None, executor=None):
+                 tools=None, executor=None, shallow_clone=False):
         self.should_cleanup = cache_directory is None
         self.authenticated = authenticated
         self.cache_directory = cache_directory
         self.tools = tools or []
         self.executor = executor
+        self.shallow_clone = shallow_clone
 
     def get_repo_class(self):
         if self.authenticated:
@@ -55,27 +56,48 @@ class RepoManager(object):
                 self.cache_directory, dired_repo_name))
         return dirname
 
-    def clone_repo(self, repo_name, remote_repo):
+    def clone_repo(self, repo_name, remote_repo, ref):
         """Clones the given repo and returns the Repository object."""
         dirname = self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
-        repo = klass(repo_name, dirname, self.tools, self.executor)
-        if os.path.isdir("%s/.git" % dirname):
-            log.debug("Updating %s to %s", repo.download_location, dirname)
-            self.executor(
-                "cd %s && git checkout master && git pull --all" % dirname)
+        repo = klass(repo_name, dirname, self.tools, self.executor, shallow=self.shallow_clone)
+        if self.shallow_clone:
+            remote_name = 'origin'
+            log.debug("Shallow cloning.")
+            download_location = repo.download_location
+            log.debug("Creating stub git repo at %s" % (dirname))
+            self.executor("mkdir -p %s" % (dirname, ))
+            self.executor("cd %s && git init" % (dirname, ))
+            log.debug("Adding origin repo %s " % (download_location))
+            self.executor("cd %s && git remote add origin %s" % (dirname,
+                                                                 download_location))
+            if remote_repo:
+                log.debug("Adding remote from %s", remote_repo.url)
+                self.executor("cd %s && git remote add %s %s" % (dirname,
+                                                                 remote_repo.name,
+                                                                 remote_repo.url))
+                remote_name = remote_repo.name
+            log.debug("Fetching HEAD")
+            self.executor("cd %s && git fetch --depth=1 origin HEAD" % dirname)
+            log.debug("Fetching %s", ref)
+            self.executor("cd %s && git fetch --depth=1 %s %s" % (dirname, remote_name, ref))
         else:
-            log.debug("Cloning %s to %s", repo.download_location, dirname)
-            self.executor(
-                "git clone %s %s" % (repo.download_location, dirname))
+            if os.path.isdir("%s/.git" % dirname):
+                log.debug("Updating %s to %s", repo.download_location, dirname)
+                self.executor(
+                    "cd %s && git checkout master && git pull --all" % dirname)
+            else:
+                log.debug("Cloning %s to %s", repo.download_location, dirname)
+                self.executor(
+                    "git clone %s %s" % (repo.download_location, dirname))
 
-        if remote_repo is not None:
-            log.debug("Pulling remote branch from %s", remote_repo.url)
-            self.executor("cd %s && git remote add %s %s" % (dirname,
-                                                             remote_repo.name,
-                                                             remote_repo.url))
-            self.executor("cd %s && git pull --all" % dirname)
+            if remote_repo is not None:
+                log.debug("Pulling remote branch from %s", remote_repo.url)
+                self.executor("cd %s && git remote add %s %s" % (dirname,
+                                                                 remote_repo.name,
+                                                                 remote_repo.url))
+                self.executor("cd %s && git pull --all" % dirname)
         return repo
 
     def cleanup(self):
@@ -153,6 +175,10 @@ class Imhotep(object):
         if filenames is None:
             filenames = []
         self.requested_filenames = set(filenames)
+        if kwargs['shallow'] is None:
+            self.shallow = False
+        else:
+            self.shallow = kwargs['shallow']
 
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
@@ -177,7 +203,8 @@ class Imhotep(object):
 
         try:
             repo = self.manager.clone_repo(self.repo_name,
-                                           remote_repo=cinfo.remote_repo)
+                                           remote_repo=cinfo.remote_repo,
+                                           ref=cinfo.ref)
             diff = repo.diff_commit(cinfo.commit,
                                     compare_point=cinfo.origin)
 
@@ -222,7 +249,8 @@ def gen_imhotep(**kwargs):
     manager = RepoManager(authenticated=kwargs['authenticated'],
                           cache_directory=kwargs['cache_directory'],
                           tools=tools,
-                          executor=run)
+                          executor=run,
+                          shallow_clone=kwargs['shallow'])
 
     if kwargs['pr_number']:
         pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'])
@@ -230,7 +258,7 @@ def gen_imhotep(**kwargs):
     else:
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
         commit_info = CommitInfo(kwargs['commit'], None, None)
-
+    log.debug("Shallow: %s ", kwargs['shallow'])
     return Imhotep(requester=req, repo_manager=manager,
                    commit_info=commit_info, **kwargs)
 
@@ -301,7 +329,6 @@ if __name__ == '__main__':
         help="Path to directory to cache the repository",
         type=str,
         required=False)
-
     arg_parser.add_argument(
         '--linter',
         help="Path to linters to run, e.g. 'imhotep.tools:PyLint'",
@@ -309,6 +336,10 @@ if __name__ == '__main__':
         nargs="+",
         default=[],
         required=False)
+    arg_parser.add_argument(
+        '--shallow',
+        help="Performs a shallow clone of the repo",
+        action="store_true")
 
     # parse out repo name
     args = arg_parser.parse_args()
