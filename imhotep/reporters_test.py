@@ -37,7 +37,7 @@ def test_pr_already_reported():
     pr = PRReporter(requester, 10)
     pr._comments = comments
     result = pr.report_line(repo_name='justinabrahms/imhotep', commit='sha',
-                            file_name='foo.py', line_number=10, position=2,
+                            file_name='foo.py', line_number=2, position=2,
                             message='Get that out')
     assert result is None
 
