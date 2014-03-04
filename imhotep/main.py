@@ -174,6 +174,7 @@ def gen_imhotep(**kwargs):
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
         commit_info = CommitInfo(kwargs['commit'], None, None)
     log.debug("Shallow: %s ", kwargs['shallow'])
+    shallow_clone = False
     if kwargs['shallow']:
         shallow_clone = kwargs['shallow']
     return Imhotep(requester=req,
