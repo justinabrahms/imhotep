@@ -11,4 +11,9 @@ setup(
     description='A tool to pipe linters into code review',
     requires=['requests'],
     extras_require={'pylint': 'PyLint'},
+    entry_points = {
+        'console_scripts': [
+            'imhotep = imhotep.main:main',
+        ],
+    }
 )
