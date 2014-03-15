@@ -1,10 +1,8 @@
 import logging
-
 import os
+from tempfile import mkdtemp
 
 from repositories import Repository, AuthenticatedRepository
-
-from tempfile import mkdtemp
 
 log = logging.getLogger(__name__)
 

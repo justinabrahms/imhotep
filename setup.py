@@ -9,6 +9,11 @@ setup(
     author='Justin Abrahms',
     author_email='justin@abrah.ms',
     description='A tool to pipe linters into code review',
-    requires=['requests'],
+    install_requires=['requests'],
     extras_require={'pylint': 'PyLint'},
+    entry_points = {
+        'console_scripts': [
+            'imhotep = imhotep.main:main',
+        ],
+    }
 )

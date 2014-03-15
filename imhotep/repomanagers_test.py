@@ -1,7 +1,7 @@
 import mock
 import re
+from imhotep.app import find_config
 
-from main import find_config
 from testing_utils import calls_matching_re
 
 from shas import Remote

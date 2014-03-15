@@ -1,6 +1,8 @@
 import logging
 
 log = logging.getLogger(__name__)
+
+
 class ToolsNotFound(Exception):
     pass
 
@@ -19,6 +21,7 @@ class Repository(object):
         self.tools = tools
         self.executor = executor
         self.shallow = shallow
+
     @property
     def download_location(self):
         return "git://github.com/%s.git" % self.name
