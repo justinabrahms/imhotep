@@ -31,7 +31,6 @@ def test_config_loading():
     c = load_config('doesnt_exist')
     assert isinstance(c, dict)
 
-
 def test_tools_invoked_on_repo():
     m = mock.MagicMock()
     m.invoke.return_value = {}
@@ -39,6 +38,14 @@ def test_tools_invoked_on_repo():
     run_analysis(repo)
     assert m.invoke.called
 
+def test_run_analysis__config_fetch_error_handled():
+    mock_tool = mock.Mock()
+    mock_tool.get_configs.side_effect = AttributeError()
+    mock_tool.invoke.return_value = []
+
+    repo = Repository('name', 'loc', [mock_tool], None)
+
+    assert {} == run_analysis(repo)
 
 def test_tools_merges_tool_results():
     m = mock.MagicMock()
