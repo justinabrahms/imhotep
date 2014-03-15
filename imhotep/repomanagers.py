@@ -115,4 +115,4 @@ class ShallowRepoManager(RepoManager):
             remote_name = remote_repo.name
         self.fetch(dirname, 'origin', 'HEAD')
         self.fetch(dirname, remote_name, ref)
-
+        return repo
