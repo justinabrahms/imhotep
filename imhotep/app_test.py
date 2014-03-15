@@ -1,16 +1,21 @@
 from collections import namedtuple
+import json
 
 import mock
 
 from app import (run_analysis, get_tools, UnknownTools, Imhotep, NoCommitInfo,
-    run, load_plugins)
+    run, load_plugins, gen_imhotep)
 from imhotep.main import load_config
+from imhotep.testing_utils import fixture_path
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from repositories import Repository, ToolsNotFound
 from diff_parser import Entry
 
 
 repo_name = 'justinabrahms/imhotep'
+
+with open(fixture_path('remote_pr.json')) as f:
+    remote_json_fixture = json.loads(f.read())
 
 
 def test_run():
@@ -166,3 +171,31 @@ def test_imhotep_get_filenames_requested_destination():
     filenames = i.get_filenames([e1], set(['b.txt']))
     assert filenames == ['b.txt']
 
+
+def gen_imhotep_dict():
+    return {
+        'github_username': 'username',
+        'github_password': 'password',
+        'linter': '',
+        'shallow': False,
+        'authenticated': False,
+        'cache_directory': '/tmp',
+        'pr_number': None,
+    }
+
+def test_gen_imhotep__returns_instance():
+    kwargs = gen_imhotep_dict()
+    kwargs['commit'] = 'abcdef0'
+    retval = gen_imhotep(**kwargs)
+    assert isinstance(retval, Imhotep)
+
+def test_gen_imhotep__shallow_pr():
+    kwargs = gen_imhotep_dict()
+    kwargs['pr_number'] = 10
+    kwargs['shallow'] = True
+    kwargs['repo_name'] = 'user/repo'
+
+    with mock.patch('imhotep.http.GithubRequester') as mock_gh_req:
+        mock_gh_req.return_value.get.return_value.json.return_value = remote_json_fixture
+        retval = gen_imhotep(**kwargs)
+    assert isinstance(retval, Imhotep)
