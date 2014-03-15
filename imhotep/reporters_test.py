@@ -44,7 +44,7 @@ def test_pr_already_reported():
 def test_get_comments_no_cache():
     return_data = {'foo': 'bar'}
     requester = mock.MagicMock()
-    requester.get.return_value.json = return_data
+    requester.get.return_value.json = lambda: return_data
     requester.get.return_value.status_code = 200
     pr = GitHubReporter(requester)
     result = pr.get_comments('example.com')
