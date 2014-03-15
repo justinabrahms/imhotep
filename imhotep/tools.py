@@ -10,7 +10,7 @@ class Tool(object):
     dictionary structure like:
 
       {'relative_filename': {'line_number': [error1, error2]}}
-      eg: {'imhotep/main.py': {'103': ['line too long']}}
+      eg: {'imhotep/app.py': {'103': ['line too long']}}
     """
 
     def __init__(self, command_executor, filenames=set()):
