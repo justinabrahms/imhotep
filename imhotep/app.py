@@ -9,7 +9,7 @@ from imhotep.repomanagers import ShallowRepoManager, RepoManager
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from diff_parser import DiffContextParser
 from shas import get_pr_info, CommitInfo
-from http import GithubRequester
+from imhotep import http
 from errors import UnknownTools, NoCommitInfo
 
 
@@ -137,7 +137,7 @@ class Imhotep(object):
 
 
 def gen_imhotep(**kwargs):
-    req = GithubRequester(kwargs['github_username'],
+    req = http.GithubRequester(kwargs['github_username'],
                           kwargs['github_password'])
 
     plugins = load_plugins()
@@ -158,7 +158,7 @@ def gen_imhotep(**kwargs):
         commit_info = pr_info.to_commit_info()
     else:
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
-        commit_info = CommitInfo(kwargs['commit'], None, None)
+        commit_info = CommitInfo(kwargs['commit'], None, None, None)
 
     log.debug('Shallow: %s', kwargs['shallow'])
     shallow_clone = kwargs['shallow'] or False
