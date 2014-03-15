@@ -29,7 +29,7 @@ def main():
     """
     Main entrypoint for the command-line app.
     """
-    args = app.parse_args(sys.argv)
+    args = app.parse_args(sys.argv[1:])
     params = args.__dict__
     params.update(**load_config(args.config_file))
 
