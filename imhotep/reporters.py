@@ -27,8 +27,9 @@ class PrintingReporter(Reporter):
 
 
 class GitHubReporter(Reporter):
-    def __init__(self):
+    def __init__(self, requester):
         self._comments = []
+        self.requester = requester
 
     def clean_already_reported(self, comments, file_name, position,
                                message):
@@ -45,10 +46,10 @@ class GitHubReporter(Reporter):
                 return clean_message
         return message
 
-    def get_comments(self):
+    def get_comments(self, report_url):
         if not self._comments:
-            log.debug("PR Request: %s", self.report_url)
-            result = self.requester.get(self.report_url)
+            log.debug("PR Request: %s", report_url)
+            result = self.requester.get(report_url)
             if result.status_code >= 400:
                 log.error("Error requesting comments from github. %s",
                           result.json)
@@ -58,16 +59,12 @@ class GitHubReporter(Reporter):
 
 
 class CommitReporter(GitHubReporter):
-    def __init__(self, requester):
-        self.requester = requester
-        super(CommitReporter, self).__init__()
-
     def report_line(self, repo_name, commit, file_name, line_number, position,
                     message):
-        self.report_url = (
+        report_url = (
             'https://api.github.com/repos/%s/commits/%s/comments'
             % (repo_name, commit))
-        comments = self.get_comments()
+        comments = self.get_comments(report_url)
         message = self.clean_already_reported(comments, file_name,
                                               position, message)
         payload = {
@@ -77,23 +74,22 @@ class CommitReporter(GitHubReporter):
             'position': position,
             'line': None,
         }
-        log.debug("Commit Request: %s", self.report_url)
+        log.debug("Commit Request: %s", report_url)
         log.debug("Commit Payload: %s", payload)
-        self.requester.post(self.report_url, payload)
+        self.requester.post(report_url, payload)
 
 
 class PRReporter(GitHubReporter):
     def __init__(self, requester, pr_number):
-        self.requester = requester
         self.pr_number = pr_number
-        super(PRReporter, self).__init__()
+        super(PRReporter, self).__init__(requester)
 
     def report_line(self, repo_name, commit, file_name, line_number, position,
                     message):
-        self.report_url = (
+        report_url = (
             'https://api.github.com/repos/%s/pulls/%s/comments'
             % (repo_name, self.pr_number))
-        comments = self.get_comments()
+        comments = self.get_comments(report_url)
         message = self.clean_already_reported(comments, file_name,
                                               position, message)
         if not message:
@@ -105,9 +101,9 @@ class PRReporter(GitHubReporter):
             'path': file_name,  # relative file path
             'position': position,  # line index into the diff
         }
-        log.debug("PR Request: %s", self.report_url)
+        log.debug("PR Request: %s", report_url)
         log.debug("PR Payload: %s", payload)
-        result = self.requester.post(self.report_url, payload)
+        result = self.requester.post(report_url, payload)
         if result.status_code >= 400:
             log.error("Error posting line to github. %s", result.json)
         return result
