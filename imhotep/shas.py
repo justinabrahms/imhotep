@@ -47,4 +47,4 @@ def get_pr_info(requester, reponame, number):
     "Returns the PullRequest as a PRInfo object"
     resp = requester.get(
         'https://api.github.com/repos/%s/pulls/%s' % (reponame, number))
-    return PRInfo(resp.json)
+    return PRInfo(resp.json())
