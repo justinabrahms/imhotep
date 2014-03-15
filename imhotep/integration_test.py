@@ -13,28 +13,30 @@ delete comment: DELETE /repos/:owner/:repo/pulls/comments/:number
                 http://developer.github.com/v3/pulls/comments/#delete-a-comment
 """
 import os
+
 import pytest
+
 from imhotep.http import GithubRequester
 from imhotep.reporters import PRReporter
+
 
 ghu = os.getenv('GITHUB_USERNAME')
 ghp = os.getenv('GITHUB_PASSWORD')
 
+github_not_set = not ghu or not ghp
 
-@pytest.mark.skipif(not ghu or not ghp,
-                    reason="must specify github credentials as env var")
+require_github_creds = pytest.mark.skipif(
+    github_not_set, reason="must specify github credentials as env var")
+
+
+@require_github_creds
 def test_github_post():
     repo = 'imhotepbot/sacrificial-integration-tests'
     pr = 1
     test_str = 'integration test error name'
     req = GithubRequester(ghu, ghp)
     r = PRReporter(req, pr)
-    r.report_line(repo,
-                  'da6a127',
-                  'foo.py',
-                  2,
-                  3, # the first 'pass' line.
-                  test_str)
+    r.report_line(repo, 'da6a127', 'foo.py', 2, 3, test_str)
     comments = req.get('https://api.github.com/repos/%s/pulls/%s/comments' %
                        (repo, pr)).json
     posted = [x for x in comments if test_str in x['body']]
@@ -45,3 +47,27 @@ def test_github_post():
         for comment in comments:
             req.delete('https://api.github.com/repos/%s/pulls/comments/%s' % (
                 repo, comment['id']))
+
+
+@require_github_creds
+def test_dont_post_duplicate_comments():
+    repo = 'imhotepbot/sacrificial-integration-tests'
+    pr = 1
+    test_str = 'integration test error name'
+    req = GithubRequester(ghu, ghp)
+    r = PRReporter(req, pr)
+    args = [repo, 'da6a127', 'foo.py', 2, 3, test_str]
+
+    r.report_line(*args)
+    r.report_line(*args)  # should dedupe.
+
+    comment_url = 'https://api.github.com/repos/%s/pulls/%s/comments' % (
+        repo, pr)
+    comments = req.get(comment_url).json
+    posted = [x for x in comments if test_str in x['body']]
+
+    try:
+        assert len(posted) == 1
+    finally:
+        for comment in comments:
+            req.delete('%s/%s' % (comment_url, comment['id']))
