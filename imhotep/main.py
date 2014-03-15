@@ -8,7 +8,7 @@ import glob
 
 import pkg_resources
 
-from repomanagers import RepoManager
+from repomanagers import RepoManager, ShallowRepoManager
 from reporters import PrintingReporter, CommitReporter, PRReporter
 from diff_parser import DiffContextParser
 from shas import get_pr_info, CommitInfo
@@ -160,12 +160,14 @@ def gen_imhotep(**kwargs):
 
     plugins = load_plugins()
     tools = get_tools(kwargs['linter'], plugins)
-
-    manager = RepoManager(authenticated=kwargs['authenticated'],
+    if kwargs['shallow']:
+        Manager = ShallowRepoManager
+    else:
+        Manager = RepoManager
+    manager = Manager(authenticated=kwargs['authenticated'],
                           cache_directory=kwargs['cache_directory'],
                           tools=tools,
-                          executor=run,
-                          shallow_clone=kwargs['shallow'])
+                          executor=run)
 
     if kwargs['pr_number']:
         pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'])

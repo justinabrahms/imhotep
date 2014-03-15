@@ -5,7 +5,7 @@ from main import find_config
 from testing_utils import calls_matching_re
 
 from shas import Remote
-from repomanagers import RepoManager
+from repomanagers import RepoManager, ShallowRepoManager
 from repositories import Repository, AuthenticatedRepository
 
 repo_name = 'justinabrahms/imhotep'
@@ -45,9 +45,9 @@ def test_fetch():
 
 def test_shallow_clone():
     m = mock.Mock()
-    r = RepoManager(executor=m, tools=[None])
+    r = ShallowRepoManager(executor=m, tools=[None])
     repo = Repository(repo_name, '/tmp/a_dir', [None], m, shallow=True)
-    r.shallow_clone(repo, '/tmp/a_dir', repo_name, Remote("name", "url"), 'foo')
+    r.clone_repo(repo_name, Remote("name", "url"), 'foo')
 
     assert m.called_with('cd /tmp/a_dir && git init')
     assert m.called_with('cd /tmp/a_dir && git remote add name url')
