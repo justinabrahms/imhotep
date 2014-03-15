@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 Remote = namedtuple('Remote', ('name', 'url'))
-CommitInfo = namedtuple("CommitInfo", ('commit', 'origin', 'remote_repo'))
+CommitInfo = namedtuple("CommitInfo", ('commit', 'origin', 'remote_repo','ref'))
 
 
 class PRInfo(object):
@@ -17,6 +17,14 @@ class PRInfo(object):
         return self.json['head']['sha']
 
     @property
+    def base_ref(self):
+        return self.json['base']['ref']
+
+    @property
+    def head_ref(self):
+        return self.json['head']['ref']
+
+    @property
     def has_remote_repo(self):
         return self.json['base']['repo']['owner']['login'] != \
                self.json['head']['repo']['owner']['login']
@@ -30,7 +38,7 @@ class PRInfo(object):
         return remote
 
     def to_commit_info(self):
-        return CommitInfo(self.base_sha, self.head_sha, self.remote_repo)
+        return CommitInfo(self.base_sha, self.head_sha, self.remote_repo, self.head_ref)
 
 
 def get_pr_info(requester, reponame, number):

@@ -1,3 +1,6 @@
+import logging
+
+log = logging.getLogger(__name__)
 class ToolsNotFound(Exception):
     pass
 
@@ -7,7 +10,7 @@ class Repository(object):
     Represents a github repository (both in the abstract and on disk).
     """
 
-    def __init__(self, name, loc, tools, executor):
+    def __init__(self, name, loc, tools, executor, shallow=False):
         if len(tools) == 0:
             raise ToolsNotFound()
 
@@ -15,7 +18,7 @@ class Repository(object):
         self.dirname = loc
         self.tools = tools
         self.executor = executor
-
+        self.shallow = shallow
     @property
     def download_location(self):
         return "git://github.com/%s.git" % self.name

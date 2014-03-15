@@ -19,6 +19,7 @@ non_remote_pr = PRInfo(not_remote_json)
 def test_commit_info():
     commit_info = CommitInfo('02c774e4a8d74154468211b14f631748c1d23ef6',
                              '9216c7b61c6dbf547a22e5a5ad282252acc9735f',
+                             None,
                              None)
     assert commit_info.commit == '02c774e4a8d74154468211b14f631748c1d23ef6'
     assert commit_info.origin == '9216c7b61c6dbf547a22e5a5ad282252acc9735f'
@@ -31,6 +32,14 @@ def test_pr_info_base_sha():
 
 def test_pr_info_head_sha():
     assert remote_pr.head_sha == '9216c7b61c6dbf547a22e5a5ad282252acc9735f'
+
+
+def test_pr_info_base_ref():
+    assert remote_pr.base_ref == 'master'
+
+
+def test_pr_info_head_ref():
+    assert remote_pr.head_ref == 'the-cache-option'
 
 
 def test_pr_info_has_remote_repo():

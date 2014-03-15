@@ -1,4 +1,3 @@
-from collections import namedtuple
 import json
 import logging
 import os
@@ -6,12 +5,11 @@ import subprocess
 import sys
 import glob
 
-from tempfile import mkdtemp
 
 import pkg_resources
 
+from repomanagers import RepoManager, ShallowRepoManager
 from reporters import PrintingReporter, CommitReporter, PRReporter
-from repositories import Repository, AuthenticatedRepository
 from diff_parser import DiffContextParser
 from shas import get_pr_info, CommitInfo
 from http import GithubRequester, NoGithubCredentials
@@ -26,63 +24,6 @@ def run(cmd, cwd='.'):
     return subprocess.Popen(
         [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd).communicate()[0]
 
-
-class RepoManager(object):
-    """
-    Manages creation and deletion of `Repository` objects.
-    """
-    to_cleanup = {}
-
-    def __init__(self, authenticated=False, cache_directory=None,
-                 tools=None, executor=None):
-        self.should_cleanup = cache_directory is None
-        self.authenticated = authenticated
-        self.cache_directory = cache_directory
-        self.tools = tools or []
-        self.executor = executor
-
-    def get_repo_class(self):
-        if self.authenticated:
-            return AuthenticatedRepository
-        return Repository
-
-    def clone_dir(self, repo_name):
-        dired_repo_name = repo_name.replace('/', '__')
-        if not self.cache_directory:
-            dirname = mkdtemp(suffix=dired_repo_name)
-        else:
-            dirname = os.path.abspath("%s/%s" % (
-                self.cache_directory, dired_repo_name))
-        return dirname
-
-    def clone_repo(self, repo_name, remote_repo):
-        """Clones the given repo and returns the Repository object."""
-        dirname = self.clone_dir(repo_name)
-        self.to_cleanup[repo_name] = dirname
-        klass = self.get_repo_class()
-        repo = klass(repo_name, dirname, self.tools, self.executor)
-        if os.path.isdir("%s/.git" % dirname):
-            log.debug("Updating %s to %s", repo.download_location, dirname)
-            self.executor(
-                "cd %s && git checkout master && git pull --all" % dirname)
-        else:
-            log.debug("Cloning %s to %s", repo.download_location, dirname)
-            self.executor(
-                "git clone %s %s" % (repo.download_location, dirname))
-
-        if remote_repo is not None:
-            log.debug("Pulling remote branch from %s", remote_repo.url)
-            self.executor("cd %s && git remote add %s %s" % (dirname,
-                                                             remote_repo.name,
-                                                             remote_repo.url))
-            self.executor("cd %s && git pull --all" % dirname)
-        return repo
-
-    def cleanup(self):
-        if self.should_cleanup:
-            for repo_dir in self.to_cleanup.values():
-                log.debug("Cleaning up %s", repo_dir)
-                self.executor('rm -rf %s' % repo_dir)
 
 
 def find_config(dirname, config_filenames):
@@ -137,7 +78,7 @@ class Imhotep(object):
                  repo_name=None, pr_number=None,
                  commit_info=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
-                 filenames=None, **kwargs):
+                 filenames=None, shallow_clone=False, **kwargs):
         # TODO(justinabrahms): kwargs exist until we handle cli params better
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
         self.requester = requester
@@ -153,7 +94,7 @@ class Imhotep(object):
         if filenames is None:
             filenames = []
         self.requested_filenames = set(filenames)
-
+        self.shallow = shallow_clone
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
 
@@ -177,7 +118,8 @@ class Imhotep(object):
 
         try:
             repo = self.manager.clone_repo(self.repo_name,
-                                           remote_repo=cinfo.remote_repo)
+                                           remote_repo=cinfo.remote_repo,
+                                           ref=cinfo.ref)
             diff = repo.diff_commit(cinfo.commit,
                                     compare_point=cinfo.origin)
 
@@ -218,8 +160,11 @@ def gen_imhotep(**kwargs):
 
     plugins = load_plugins()
     tools = get_tools(kwargs['linter'], plugins)
-
-    manager = RepoManager(authenticated=kwargs['authenticated'],
+    if kwargs['shallow']:
+        Manager = ShallowRepoManager
+    else:
+        Manager = RepoManager
+    manager = Manager(authenticated=kwargs['authenticated'],
                           cache_directory=kwargs['cache_directory'],
                           tools=tools,
                           executor=run)
@@ -230,9 +175,15 @@ def gen_imhotep(**kwargs):
     else:
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
         commit_info = CommitInfo(kwargs['commit'], None, None)
-
-    return Imhotep(requester=req, repo_manager=manager,
-                   commit_info=commit_info, **kwargs)
+    log.debug("Shallow: %s ", kwargs['shallow'])
+    shallow_clone = False
+    if kwargs['shallow']:
+        shallow_clone = kwargs['shallow']
+    return Imhotep(requester=req,
+                   repo_manager=manager,
+                   commit_info=commit_info,
+                   shallow_clone=shallow_clone,
+                   **kwargs)
 
 
 def get_tools(whitelist, known_plugins):
@@ -301,7 +252,6 @@ if __name__ == '__main__':
         help="Path to directory to cache the repository",
         type=str,
         required=False)
-
     arg_parser.add_argument(
         '--linter',
         help="Path to linters to run, e.g. 'imhotep.tools:PyLint'",
@@ -309,6 +259,10 @@ if __name__ == '__main__':
         nargs="+",
         default=[],
         required=False)
+    arg_parser.add_argument(
+        '--shallow',
+        help="Performs a shallow clone of the repo",
+        action="store_true")
 
     # parse out repo name
     args = arg_parser.parse_args()
