@@ -4,8 +4,13 @@ from collections import namedtuple
 dir = os.path.dirname(__file__)
 fixture_path = lambda s: os.path.join(dir, 'fixtures/', s)
 
-json_wrapper = namedtuple('wrapper', ('json', 'status_code'))
+class JsonWrapper(object):
+    def __init__(self, json, status):
+        self.status_code = status
+        self.payload = json
 
+    def json(self):
+        return self.payload
 
 class Requester(object):
     def __init__(self, fixture):
@@ -13,12 +18,13 @@ class Requester(object):
 
     def get(self, url):
         self.url = url
-        return json_wrapper(self.fixture, 200)
+        return JsonWrapper(self.fixture, 200)
 
     def post(self, url, data):
         self.url = url
         self.data = data
-        return json_wrapper(self.fixture, 200)
+        return JsonWrapper(self.fixture, 200)
+
 
 
 def calls_matching_re(mockObj, regex):
