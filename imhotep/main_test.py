@@ -3,7 +3,7 @@ import mock
 from imhotep.app import parse_args
 from imhotep.errors import UnknownTools, NoCommitInfo
 from imhotep.http import NoGithubCredentials
-from imhotep.main import main
+from imhotep.main import main, load_config
 
 
 class MockParserRetval(object):
@@ -65,3 +65,26 @@ def test_main__returns_false_if_missing_tools():
             mock_gen.side_effect = UnknownTools('tools')
 
             assert main() is False
+
+def test_load_config__returns_json_content():
+    with mock.patch('imhotep.main.open', create=True) as mock_open:
+        mock_open.return_value = mock.MagicMock(spec=file)
+
+        file_handle = mock_open.return_value.__enter__.return_value
+        file_handle.read.return_value = '{"valid": "json"}'
+
+        cfg = load_config('filename')
+
+        assert {'valid': 'json'} == cfg
+
+
+def test_load_config__value_error_handled():
+    with mock.patch('imhotep.main.open', create=True) as mock_open:
+        mock_open.return_value = mock.MagicMock(spec=file)
+
+        file_handle = mock_open.return_value.__enter__.return_value
+        file_handle.read.side_effect = ValueError()
+
+        cfg = load_config('filename')
+
+        assert {} == cfg
