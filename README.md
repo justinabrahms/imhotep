@@ -28,6 +28,7 @@ pip install -e .
 
 You'll also need to install the plugins you'd like to run. Examples
 include [jshint](https://github.com/justinabrahms/imhotep_jshint),
+[flake8](https://github.com/glogiotatidis/imhotep_flake8),
 [pep8](https://github.com/justinabrahms/imhotep_pep8), 
 [pylint](https://github.com/justinabrahms/imhotep_pylint),
 [rubocop](https://github.com/scottjab/imhotep_rubocop),
