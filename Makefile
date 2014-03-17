@@ -3,3 +3,6 @@ test:
 
 clean:
 	rm -rf build/
+
+upload:
+	python setup.py sdist upload
