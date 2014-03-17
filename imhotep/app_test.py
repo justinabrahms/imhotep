@@ -4,7 +4,7 @@ import json
 import mock
 
 from app import (run_analysis, get_tools, UnknownTools, Imhotep, NoCommitInfo,
-    run, load_plugins, gen_imhotep)
+    run, load_plugins, gen_imhotep, find_config)
 from imhotep.main import load_config
 from imhotep.testing_utils import fixture_path
 from reporters import PrintingReporter, CommitReporter, PRReporter
@@ -199,3 +199,36 @@ def test_gen_imhotep__shallow_pr():
         mock_gh_req.return_value.get.return_value.json.return_value = remote_json_fixture
         retval = gen_imhotep(**kwargs)
     assert isinstance(retval, Imhotep)
+
+
+def test_find_config__glob_no_results():
+    with mock.patch('glob.glob') as mock_glob:
+        mock_glob.return_value = []
+        retval = find_config('dirname', ['configs'])
+    assert set() == retval
+
+
+def test_find_config__glob_multi_results():
+    returns = [['setup.py', 'foo.py'], ['bar.py']]
+    with mock.patch('glob.glob') as mock_glob:
+        mock_glob.side_effect = lambda x: returns.pop(0)
+        retval = find_config('dirname', ['configs', 'others'])
+
+    assert retval == set(['setup.py', 'foo.py', 'bar.py'])
+
+def test_find_config__prefix_dirname():
+    with mock.patch('glob.glob') as mock_glob:
+        mock_glob.return_value = []
+
+        find_config('dirname', ['config'])
+
+        mock_glob.assert_called_once_with('dirname/config')
+
+def test_find_config__called_with_each_config_file():
+    with mock.patch('glob.glob') as mock_glob:
+        mock_glob.return_value = []
+
+        find_config('dirname', ['config', 'another'])
+
+        mock_glob.assert_has_calls([mock.call.glob('dirname/config'),
+                                    mock.call.glob('dirname/another')])
