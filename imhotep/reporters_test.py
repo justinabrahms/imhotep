@@ -87,3 +87,12 @@ def test_clean_already_reported():
     result = pr.clean_already_reported(comments, 'foo.py',
                                        2, message)
     assert result == ['New message']
+
+
+def test_convert_message_to_string():
+    message = ['foo', 'bar']
+    requester = mock.MagicMock()
+    requester.username = 'magicmock'
+    pr = GitHubReporter(requester)
+    result = pr.convert_message_to_string(message)
+    assert result == '* foo\n* bar\n'
