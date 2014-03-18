@@ -1,4 +1,7 @@
 language: python
+env:
+  secure: "DVkR9zJMsITR8vL3W6VtqnoVAb1K+McYD0AoA2u5E8PQimwyyCCWet5H+Z0u9UEPSAxlWM3TSX6ffERY2TS/a/zlw1q+OcOHafl39klRrIYuF85zNXrdbO25nrr4z9cOhYMTPMMvo41GMKmkGxGbZxVXAVP7P8rDhaOQaEbKGnI="
+  - GITHUB_USERNAME="justinabrahms"
 python:
   - "2.6"
   - "2.7"
