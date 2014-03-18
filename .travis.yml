@@ -1,12 +1,11 @@
 language: python
 env:
   global:
-    - secure: "DVkR9zJMsITR8vL3W6VtqnoVAb1K+McYD0AoA2u5E8PQimwyyCCWet5H+Z0u9UEPSAxlWM3TSX6ffERY2TS/a/zlw1q+OcOHafl39klRrIYuF85zNXrdbO25nrr4z9cOhYMTPMMvo41GMKmkGxGbZxVXAVP7P8rDhaOQaEbKGnI="
-    - GITHUB_USERNAME="justinabrahms"
+  - GITHUB_USERNAME="imhotepbot"
+  - secure: Oziz2mESs97bcb4Z62UspS30gvjWViUcBrErqSLJ2cDqK7gpPOHMPNMwhLmnuTgjBjf4M+FhJRG6yasTM7bBtD6joVbsxnfNb5kRUehOeCBrlQcuQMVdlwR5EuvWAb17otIo7ILyZnd+9cRd3aR2HYtEjJuvHMG6GwaotWGZkAw=
 python:
-  - "2.6"
-  - "2.7"
-install: "pip install -r requirements.txt"
+- '2.6'
+- '2.7'
+install: pip install -r requirements.txt
 script: py.test --cov . --cov-report term-missing
-after_success:
-  coveralls
+after_success: coveralls
