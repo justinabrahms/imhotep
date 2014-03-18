@@ -57,6 +57,13 @@ class GitHubReporter(Reporter):
             self._comments = result.json()
         return self._comments
 
+    def convert_message_to_string(self, message):
+        """Convert message from list to string for GitHub API."""
+        final_message = ''
+        for submessage in message:
+            final_message += '* {submessage}\n'.format(submessage=submessage)
+        return final_message
+
 
 class CommitReporter(GitHubReporter):
     def report_line(self, repo_name, commit, file_name, line_number, position,
@@ -68,7 +75,7 @@ class CommitReporter(GitHubReporter):
         message = self.clean_already_reported(comments, file_name,
                                               position, message)
         payload = {
-            'body': message,
+            'body': self.convert_message_to_string(message),
             'sha': commit,
             'path': file_name,
             'position': position,
@@ -96,7 +103,7 @@ class PRReporter(GitHubReporter):
             log.debug('Message already reported')
             return None
         payload = {
-            'body': message,
+            'body': self.convert_message_to_string(message),
             'commit_id': commit,  # sha
             'path': file_name,  # relative file path
             'position': position,  # line index into the diff
