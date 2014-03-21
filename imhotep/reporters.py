@@ -12,7 +12,7 @@ class Reporter(object):
 class PrintingReporter(Reporter):
     def report_line(self, repo_name, commit, file_name, line_number, position,
                     message):
-        print "Would have posted the following: \n" \
+        print("Would have posted the following: \n" \
               "commit: %(commit)s\n" \
               "position: %(position)s\n" \
               "message: %(message)s\n" \
@@ -23,7 +23,7 @@ class PrintingReporter(Reporter):
                   'position': position,
                   'message': message,
                   'filename': file_name
-              }
+              })
 
 
 class GitHubReporter(Reporter):
@@ -33,17 +33,16 @@ class GitHubReporter(Reporter):
 
     def clean_already_reported(self, comments, file_name, position,
                                message):
+        """
+        message is potentially a list of messages to post. This is later
+        converted into a string.
+        """
         for comment in comments:
             if ((comment['path'] == file_name
                  and comment['position'] == position
                  and comment['user']['login'] == self.requester.username)):
 
-                clean_message = []
-                for submessage in message:
-                    if submessage in comment['body']:
-                        continue
-                    clean_message.append(submessage)
-                return clean_message
+                return [m for m in message if m not in comment['body']]
         return message
 
     def get_comments(self, report_url):
@@ -97,6 +96,8 @@ class PRReporter(GitHubReporter):
             'https://api.github.com/repos/%s/pulls/%s/comments'
             % (repo_name, self.pr_number))
         comments = self.get_comments(report_url)
+        if isinstance(message, basestring):
+            message = [message]
         message = self.clean_already_reported(comments, file_name,
                                               position, message)
         if not message:

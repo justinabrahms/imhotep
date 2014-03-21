@@ -10,5 +10,5 @@ env:
   - secure: Oziz2mESs97bcb4Z62UspS30gvjWViUcBrErqSLJ2cDqK7gpPOHMPNMwhLmnuTgjBjf4M+FhJRG6yasTM7bBtD6joVbsxnfNb5kRUehOeCBrlQcuQMVdlwR5EuvWAb17otIo7ILyZnd+9cRd3aR2HYtEjJuvHMG6GwaotWGZkAw=
 install: pip install tox
 script: tox
-after_success:
-  coveralls
+after_success: coveralls
+

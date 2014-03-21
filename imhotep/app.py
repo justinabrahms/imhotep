@@ -6,11 +6,11 @@ import glob
 import pkg_resources
 
 from imhotep.repomanagers import ShallowRepoManager, RepoManager
-from reporters import PrintingReporter, CommitReporter, PRReporter
-from diff_parser import DiffContextParser
-from shas import get_pr_info, CommitInfo
+from .reporters import PrintingReporter, CommitReporter, PRReporter
+from .diff_parser import DiffContextParser
+from .shas import get_pr_info, CommitInfo
 from imhotep import http
-from errors import UnknownTools, NoCommitInfo
+from .errors import UnknownTools, NoCommitInfo
 
 
 log = logging.getLogger(__name__)
