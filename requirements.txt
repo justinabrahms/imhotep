@@ -8,3 +8,4 @@ pytest-cov
 python-coveralls
 mock
 # pdbpp
+six
