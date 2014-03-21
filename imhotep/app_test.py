@@ -3,13 +3,13 @@ import json
 
 import mock
 
-from app import (run_analysis, get_tools, UnknownTools, Imhotep, NoCommitInfo,
+from .app import (run_analysis, get_tools, UnknownTools, Imhotep, NoCommitInfo,
     run, load_plugins, gen_imhotep, find_config)
 from imhotep.main import load_config
 from imhotep.testing_utils import fixture_path
-from reporters import PrintingReporter, CommitReporter, PRReporter
-from repositories import Repository, ToolsNotFound
-from diff_parser import Entry
+from .reporters import PrintingReporter, CommitReporter, PRReporter
+from .repositories import Repository, ToolsNotFound
+from .diff_parser import Entry
 
 
 repo_name = 'justinabrahms/imhotep'

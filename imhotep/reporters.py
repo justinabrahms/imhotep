@@ -12,7 +12,7 @@ class Reporter(object):
 class PrintingReporter(Reporter):
     def report_line(self, repo_name, commit, file_name, line_number, position,
                     message):
-        print "Would have posted the following: \n" \
+        print("Would have posted the following: \n" \
               "commit: %(commit)s\n" \
               "position: %(position)s\n" \
               "message: %(message)s\n" \
@@ -23,7 +23,7 @@ class PrintingReporter(Reporter):
                   'position': position,
                   'message': message,
                   'filename': file_name
-              }
+              })
 
 
 class GitHubReporter(Reporter):
