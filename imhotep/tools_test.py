@@ -2,8 +2,8 @@ import re
 
 import mock
 
-from tools import Tool
-from testing_utils import calls_matching_re
+from .tools import Tool
+from .testing_utils import calls_matching_re
 
 
 class ExampleTool(Tool):

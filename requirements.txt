@@ -2,9 +2,9 @@ logilab-astng==0.24.1
 logilab-common==0.58.3
 pylint==0.26.0
 requests==2.2.1
-wsgiref==0.1.2
+# wsgiref==0.1.2
 pytest
 pytest-cov
 python-coveralls
 mock
-pdbpp
+# pdbpp

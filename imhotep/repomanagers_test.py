@@ -2,11 +2,11 @@ import mock
 import re
 from imhotep.app import find_config
 
-from testing_utils import calls_matching_re
+from .testing_utils import calls_matching_re
 
-from shas import Remote
-from repomanagers import RepoManager, ShallowRepoManager
-from repositories import Repository, AuthenticatedRepository
+from .shas import Remote
+from .repomanagers import RepoManager, ShallowRepoManager
+from .repositories import Repository, AuthenticatedRepository
 
 repo_name = 'justinabrahms/imhotep'
 

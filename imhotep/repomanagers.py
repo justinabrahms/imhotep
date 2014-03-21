@@ -2,7 +2,7 @@ import logging
 import os
 from tempfile import mkdtemp
 
-from repositories import Repository, AuthenticatedRepository
+from .repositories import Repository, AuthenticatedRepository
 
 log = logging.getLogger(__name__)
 
