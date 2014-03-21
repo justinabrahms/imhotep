@@ -1,8 +1,13 @@
 language: python
-python:
-  - "2.6"
-  - "2.7"
-install: "pip install -r requirements.txt"
-script: py.test --cov . --cov-report term-missing
+env:
+  global:
+    - GITHUB_USERNAME="imhotepbot"
+    - secure: Oziz2mESs97bcb4Z62UspS30gvjWViUcBrErqSLJ2cDqK7gpPOHMPNMwhLmnuTgjBjf4M+FhJRG6yasTM7bBtD6joVbsxnfNb5kRUehOeCBrlQcuQMVdlwR5EuvWAb17otIo7ILyZnd+9cRd3aR2HYtEjJuvHMG6GwaotWGZkAw=
+  - TOX_ENV=py26
+  - TOX_ENV=py27
+  - TOX_ENV=py33
+  - TOX_ENV=pypy
+install: pip install tox
+script: tox
 after_success:
   coveralls
