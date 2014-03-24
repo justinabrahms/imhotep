@@ -1,6 +1,6 @@
 import logging
 from six import string_types
-from reporter import Reporter
+from .reporter import Reporter
 
 log = logging.getLogger(__name__)
 
