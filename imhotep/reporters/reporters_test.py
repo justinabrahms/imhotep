@@ -1,6 +1,6 @@
 import mock
 
-from imhotep.reporters import CommitReporter, GitHubReporter, PRReporter
+from imhotep.reporters.github import CommitReporter, GitHubReporter, PRReporter
 from imhotep.testing_utils import Requester
 
 

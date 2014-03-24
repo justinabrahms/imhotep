@@ -6,7 +6,8 @@ import glob
 import pkg_resources
 
 from imhotep.repomanagers import ShallowRepoManager, RepoManager
-from .reporters import PrintingReporter, CommitReporter, PRReporter
+from .reporters.printing import PrintingReporter
+from .reporters.github import CommitReporter, PRReporter
 from .diff_parser import DiffContextParser
 from .shas import get_pr_info, CommitInfo
 from imhotep import http
@@ -20,6 +21,7 @@ def run(cmd, cwd='.'):
     log.debug("Running: %s", cmd)
     return subprocess.Popen(
         [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd).communicate()[0]
+
 
 def find_config(dirname, config_filenames):
     configs = []
@@ -137,8 +139,8 @@ class Imhotep(object):
 
 
 def gen_imhotep(**kwargs):
-    req = http.GithubRequester(kwargs['github_username'],
-                          kwargs['github_password'])
+    req = http.BasicAuthRequester(kwargs['github_username'],
+                                  kwargs['github_password'])
 
     plugins = load_plugins()
     tools = get_tools(kwargs['linter'], plugins)

@@ -12,9 +12,9 @@ class NoGithubCredentials(Exception):
     pass
 
 
-class GithubRequester(object):
+class BasicAuthRequester(object):
     """
-    Object used for issuing authenticated API calls to GitHub.
+    Object used for issuing authenticated API calls.
     """
 
     def __init__(self, username, password):
@@ -37,3 +37,4 @@ class GithubRequester(object):
         return requests.post(
             url, data=json.dumps(payload),
             auth=self.get_auth())
+
