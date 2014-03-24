@@ -16,8 +16,8 @@ import os
 
 import pytest
 
-from imhotep.http import GithubRequester
-from imhotep.reporters import PRReporter
+from imhotep.http import BasicAuthRequester
+from imhotep.reporters.github import PRReporter
 
 
 ghu = os.getenv('GITHUB_USERNAME')
@@ -34,7 +34,7 @@ def test_github_post():
     repo = 'imhotepbot/sacrificial-integration-tests'
     pr = 1
     test_str = 'integration test error name'
-    req = GithubRequester(ghu, ghp)
+    req = BasicAuthRequester(ghu, ghp)
     r = PRReporter(req, pr)
     r.report_line(repo, 'da6a127', 'foo.py', 2, 3, test_str)
     comments = req.get('https://api.github.com/repos/%s/pulls/%s/comments' %
@@ -54,7 +54,7 @@ def test_dont_post_duplicate_comments():
     repo = 'imhotepbot/sacrificial-integration-tests'
     pr = 1
     test_str = 'integration test error name'
-    req = GithubRequester(ghu, ghp)
+    req = BasicAuthRequester(ghu, ghp)
     r = PRReporter(req, pr)
     args = [repo, 'da6a127', 'foo.py', 2, 3, test_str]
 

@@ -7,7 +7,8 @@ from .app import (run_analysis, get_tools, UnknownTools, Imhotep, NoCommitInfo,
     run, load_plugins, gen_imhotep, find_config)
 from imhotep.main import load_config
 from imhotep.testing_utils import fixture_path
-from .reporters import PrintingReporter, CommitReporter, PRReporter
+from .reporters.printing import PrintingReporter
+from .reporters.github import CommitReporter, PRReporter
 from .repositories import Repository, ToolsNotFound
 from .diff_parser import Entry
 
@@ -195,7 +196,7 @@ def test_gen_imhotep__shallow_pr():
     kwargs['shallow'] = True
     kwargs['repo_name'] = 'user/repo'
 
-    with mock.patch('imhotep.http.GithubRequester') as mock_gh_req:
+    with mock.patch('imhotep.http.BasicAuthRequester') as mock_gh_req:
         mock_gh_req.return_value.get.return_value.json.return_value = remote_json_fixture
         retval = gen_imhotep(**kwargs)
     assert isinstance(retval, Imhotep)
