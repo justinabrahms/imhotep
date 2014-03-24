@@ -1,4 +1,5 @@
 import logging
+from six import string_types
 
 log = logging.getLogger(__name__)
 
@@ -96,7 +97,7 @@ class PRReporter(GitHubReporter):
             'https://api.github.com/repos/%s/pulls/%s/comments'
             % (repo_name, self.pr_number))
         comments = self.get_comments(report_url)
-        if isinstance(message, basestring):
+        if isinstance(message, string_types):
             message = [message]
         message = self.clean_already_reported(comments, file_name,
                                               position, message)
