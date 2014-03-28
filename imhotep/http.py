@@ -34,7 +34,8 @@ class BasicAuthRequester(object):
 
     def post(self, url, payload):
         log.debug("Posting %s to %s", payload, url)
+        headers = {'content-type': 'application/json'}
         return requests.post(
             url, data=json.dumps(payload),
-            auth=self.get_auth())
+            auth=self.get_auth(), headers=headers)
 

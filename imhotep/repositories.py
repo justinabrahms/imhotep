@@ -12,7 +12,7 @@ class Repository(object):
     Represents a github repository (both in the abstract and on disk).
     """
 
-    def __init__(self, name, loc, tools, executor, shallow=False):
+    def __init__(self, name, loc, tools, executor, shallow=False, stash_url=None):
         if len(tools) == 0:
             raise ToolsNotFound()
 
@@ -21,6 +21,8 @@ class Repository(object):
         self.tools = tools
         self.executor = executor
         self.shallow = shallow
+        if stash_url is not None:
+            self.stash_url = stash_url
 
     @property
     def download_location(self):
@@ -49,4 +51,9 @@ class Repository(object):
 class AuthenticatedRepository(Repository):
     @property
     def download_location(self):
-        return "git@github.com:%s.git" % self.name
+        if self.stash_url:
+            url = "ssh://git@%s/%s.git" % (self.stash_url, self.name)
+            log.debug("Stash URL: %s", url)
+            return url
+        else:
+            return "git@github.com:%s.git" % self.name

@@ -65,7 +65,7 @@ class CommitReporter(GitHubReporter):
 
 
 class PRReporter(GitHubReporter):
-    def __init__(self, requester, pr_number):
+    def __init__(self, requester, pr_number, **kwargs):
         self.pr_number = pr_number
         super(PRReporter, self).__init__(requester)
 

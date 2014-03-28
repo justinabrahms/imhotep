@@ -14,14 +14,15 @@ class RepoManager(object):
     to_cleanup = {}
 
     def __init__(self, authenticated=False, cache_directory=None,
-                 tools=None, executor=None, shallow_clone=False):
+                 tools=None, executor=None, shallow_clone=False,
+                 stash_url=None):
         self.should_cleanup = cache_directory is None
         self.authenticated = authenticated
         self.cache_directory = cache_directory
         self.tools = tools or []
         self.executor = executor
         self.shallow = shallow_clone
-
+        self.stash_url = stash_url
     def get_repo_class(self):
         if self.authenticated:
             return AuthenticatedRepository
@@ -62,7 +63,8 @@ class RepoManager(object):
                      dirname,
                      self.tools,
                      self.executor,
-                     shallow=self.shallow_clone)
+                     shallow=self.shallow_clone,
+                     stash_url=self.stash_url)
         return (dirname, repo)
 
     def clone_repo(self, repo_name, remote_repo, ref):

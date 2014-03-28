@@ -7,9 +7,11 @@ import pkg_resources
 
 from imhotep.repomanagers import ShallowRepoManager, RepoManager
 from .reporters.printing import PrintingReporter
-from .reporters.github import CommitReporter, PRReporter
+from .reporters.stash import PReporter as StashPRReporter
+from .reporters.github import PRReporter as GithubPRReporter
+from .reporters.github import CommitReporter
 from .diff_parser import DiffContextParser
-from .shas import get_pr_info, CommitInfo
+from .shas import get_gh_pr_info, get_stash_pr_info, CommitInfo
 from imhotep import http
 from .errors import UnknownTools, NoCommitInfo
 
@@ -78,7 +80,7 @@ class Imhotep(object):
             filenames = []
         self.requested_filenames = set(filenames)
         self.shallow = shallow_clone
-
+        self.stash_server = kwargs['stash_server']
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
 
@@ -86,9 +88,15 @@ class Imhotep(object):
         if self.no_post:
             return PrintingReporter()
         if self.pr_number:
-            return PRReporter(self.requester, self.pr_number)
+            if self.stash_server:
+                return StashPRReporter(self.requester,
+                                       self.pr_number,
+                                       stash_server=self.stash_server)
+            else:
+                return GithubPRReporter(self.requester,
+                                        self.pr_number)
         elif self.commit is not None:
-            return CommitReporter(self.requester)
+            return service.CommitReporter(self.requester)
 
     def get_filenames(self, entries, requested_set=None):
         filenames = set([x.result_filename for x in entries])
@@ -114,7 +122,7 @@ class Imhotep(object):
                                            self.requested_filenames)
             results = run_analysis(repo,
                                    filenames=filenames)
-
+            log.debug("Results: %s", results)
             error_count = 0
             for entry in parse_results:
                 added_lines = [l.number for l in entry.added_lines]
@@ -139,8 +147,16 @@ class Imhotep(object):
 
 
 def gen_imhotep(**kwargs):
-    req = http.BasicAuthRequester(kwargs['github_username'],
-                                  kwargs['github_password'])
+    username = ''
+    password = ''
+    if kwargs['github']:
+        username = kwargs['github_username']
+        password = kwargs['github_password']
+    elif kwargs['stash']:
+        username = kwargs['stash_username']
+        password = kwargs['stash_password']
+    req = http.BasicAuthRequester(username,
+                                  password)
 
     plugins = load_plugins()
     tools = get_tools(kwargs['linter'], plugins)
@@ -153,10 +169,18 @@ def gen_imhotep(**kwargs):
     manager = Manager(authenticated=kwargs['authenticated'],
                           cache_directory=kwargs['cache_directory'],
                           tools=tools,
-                          executor=run)
+                          executor=run, stash_url=kwargs['stash_ssh_server'])
 
     if kwargs['pr_number']:
-        pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'])
+        if kwargs['github']:
+            pr_info = get_gh_pr_info(req,
+                                     kwargs['repo_name'],
+                                     kwargs['pr_number'])
+        elif kwargs['stash']:
+            pr_info = get_stash_pr_info(req,
+                                        kwargs['stash_server'],
+                                        kwargs['repo_name'],
+                                        kwargs['pr_number'])
         commit_info = pr_info.to_commit_info()
     else:
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
@@ -245,5 +269,11 @@ def parse_args(args):
         '--shallow',
         help="Performs a shallow clone of the repo",
         action="store_true")
+    arg_parser.add_argument(
+        '--stash',
+        help="Enables stash support, needs config updates",
+        action="store_true",
+        required=False)
+
     # parse out repo name
     return arg_parser.parse_args(args)

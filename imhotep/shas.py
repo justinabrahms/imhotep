@@ -1,4 +1,7 @@
 from collections import namedtuple
+import logging
+
+log = logging.getLogger(__name__)
 
 Remote = namedtuple('Remote', ('name', 'url'))
 CommitInfo = namedtuple("CommitInfo",
@@ -62,7 +65,7 @@ def stash_ssh_url(clone_urls):
 
 def get_stash_pr_info(requester, stash_server, reponame, number):
     project, reponame = reponame.split('/')
-    url = "/rest/api/1.0/projects/%s/repos/%s/pull-requests/%s"
+    url = "%s/rest/api/1.0/projects/%s/repos/%s/pull-requests/%s"
     request_url = url % (stash_server, project, reponame, number)
     resp = requester.get(request_url)
     pr = resp.json()
@@ -74,7 +77,11 @@ def get_stash_pr_info(requester, stash_server, reponame, number):
     head_sha = pr['fromRef']['latestChangeset']
     head_ref = pr['fromRef']['displayId']
     head_repo_login = pr['fromRef']['repository']['project']['name']
-    head_ssh_url = stash_ssh_url(pr['fromRef']['repository']['links']['clone'])
+    head_ssh_url = None
+    try:
+        head_ssh_url = stash_ssh_url(pr['fromRef']['repository']['origin']['links']['clone'])
+    except:
+        pass
     return PRInfo(base_sha,
                   base_ref,
                   base_repo_login,

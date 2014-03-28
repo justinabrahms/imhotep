@@ -38,6 +38,13 @@ def main():
     else:
         logging.basicConfig()
 
+    # If stash set disable github.
+    if params['stash']:
+        params['github'] = False
+        log.debug("Using stash")
+    else:
+        params['github'] = True
+        log.debug("Using github")
     try:
         imhotep = app.gen_imhotep(**params)
     except NoGithubCredentials:
