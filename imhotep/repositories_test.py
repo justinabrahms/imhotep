@@ -15,6 +15,12 @@ def test_authed_download_location():
     assert ar.download_location == "git@github.com:justinabrahms/imhotep.git"
 
 
+def test_authed_stash_download_location():
+    ar = AuthenticatedRepository(repo_name, None, [None],
+                                 None, stash_url="stash.company.com")
+    assert ar.download_location == "ssh://git@stash.company.com/imhotep.git"
+
+
 def test_unicode():
     r = Repository(repo_name, None, [None], None)
     assert r.__unicode__() == repo_name

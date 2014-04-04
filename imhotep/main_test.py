@@ -8,7 +8,7 @@ from imhotep.main import main, load_config
 
 
 class MockParserRetval(object):
-    def __init__(self):
+    def __init__(self, github=True, stash=False):
         self.__dict__ = {
             'config_file': 'foo.json',
             'repo_name': 'repo_name',
@@ -16,6 +16,8 @@ class MockParserRetval(object):
             'origin_commit': 'origin-commit',
             'filenames': [],
             'debug': True,
+            'github': github,
+            'stash': stash,
             'github_username': 'justinabrahms',
             'github_password': 'notachance',
             'authenticated': True,
@@ -37,6 +39,14 @@ def test_main__sanity():
     with mock.patch('imhotep.app.gen_imhotep') as mock_gen:
         with mock.patch('imhotep.app.parse_args') as mock_parser:
             mock_parser.return_value = MockParserRetval()
+            main()
+            assert mock_gen.called
+
+
+def test_main__stash():
+    with mock.patch('imhotep.app.gen_imhotep') as mock_gen:
+        with mock.patch('imhotep.app.parse_args') as mock_parser:
+            mock_parser.return_value = MockParserRetval(stash=True)
             main()
             assert mock_gen.called
 
@@ -66,6 +76,7 @@ def test_main__returns_false_if_missing_tools():
             mock_gen.side_effect = UnknownTools('tools')
 
             assert main() is False
+
 
 def test_load_config__returns_json_content():
     with mock.patch('imhotep.main.open', create=True) as mock_open:

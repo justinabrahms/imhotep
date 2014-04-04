@@ -1,7 +1,7 @@
 import json
 
 from imhotep.testing_utils import fixture_path, Requester
-from imhotep.shas import CommitInfo, PRInfo, get_gh_pr_info
+from imhotep.shas import CommitInfo, PRInfo, get_gh_pr_info, stash_ssh_url
 
 
 # via https://api.github.com/repos/justinabrahms/imhotep/pulls/10
@@ -82,7 +82,17 @@ def test_pr_info_remote_repo():
     assert remote.url == 'git@github.com:scottjab/imhotep.git'
 
 
-def test_pr_info():
+def test_stash_ssh_url():
+    links = {"clone": [{"href": "ssh://git@stash.company.com:7999/imhotep/imhotep.git",
+                         "name": "ssh"},
+                       {"href": "http://scottjab@stash.company.com:7990/scm/imhotep/imhotep.git",
+                        "name": "http"}],
+             "self": [{"href": "http://stash.company.com:7990/projects/IMHOTEP/repos/imhotep/browse"}]
+            }
+    assert stash_ssh_url(links) == "ssh://git@stash.company.com:7999/imhotep/imhotep.git"
+
+
+def test_gh_pr_info():
     r = Requester(remote_json_fixture)
     get_gh_pr_info(r, 'justinabrahms/imhotep', 10)
     assert r.url == 'https://api.github.com/repos/justinabrahms/imhotep/pulls/10'
