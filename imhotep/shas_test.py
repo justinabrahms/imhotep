@@ -1,7 +1,7 @@
 import json
 
 from imhotep.testing_utils import fixture_path, Requester
-from imhotep.shas import CommitInfo, PRInfo, get_pr_info
+from imhotep.shas import CommitInfo, PRInfo, get_gh_pr_info
 
 
 # via https://api.github.com/repos/justinabrahms/imhotep/pulls/10
@@ -12,8 +12,21 @@ with open(fixture_path('remote_pr.json')) as f:
 with open(fixture_path('non_remote_pr.json')) as f:
     not_remote_json = json.loads(f.read())
 
-remote_pr = PRInfo(remote_json_fixture)
-non_remote_pr = PRInfo(not_remote_json)
+remote_pr = PRInfo(remote_json_fixture['base']['sha'],
+                   remote_json_fixture['base']['ref'],
+                   remote_json_fixture['base']['repo']['owner']['login'],
+                   remote_json_fixture['head']['sha'],
+                   remote_json_fixture['head']['ref'],
+                   remote_json_fixture['head']['repo']['owner']['login'],
+                   remote_json_fixture['head']['repo']['ssh_url'])
+
+non_remote_pr = PRInfo(not_remote_json['base']['sha'],
+                       not_remote_json['base']['ref'],
+                       not_remote_json['base']['repo']['owner']['login'],
+                       not_remote_json['head']['sha'],
+                       not_remote_json['head']['ref'],
+                       not_remote_json['head']['repo']['owner']['login'],
+                       not_remote_json['head']['repo']['ssh_url'])
 
 
 def test_commit_info():
@@ -71,5 +84,5 @@ def test_pr_info_remote_repo():
 
 def test_pr_info():
     r = Requester(remote_json_fixture)
-    get_pr_info(r, 'justinabrahms/imhotep', 10)
+    get_gh_pr_info(r, 'justinabrahms/imhotep', 10)
     assert r.url == 'https://api.github.com/repos/justinabrahms/imhotep/pulls/10'

@@ -21,8 +21,7 @@ class Repository(object):
         self.tools = tools
         self.executor = executor
         self.shallow = shallow
-        if stash_url is not None:
-            self.stash_url = stash_url
+        self.stash_url = stash_url
 
     @property
     def download_location(self):

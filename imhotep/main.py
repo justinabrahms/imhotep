@@ -37,9 +37,9 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig()
-
+    stash = params.get('stash', False)
     # If stash set disable github.
-    if params['stash']:
+    if stash:
         params['github'] = False
         log.debug("Using stash")
     else:

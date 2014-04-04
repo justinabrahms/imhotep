@@ -80,7 +80,7 @@ class Imhotep(object):
             filenames = []
         self.requested_filenames = set(filenames)
         self.shallow = shallow_clone
-        self.stash_server = kwargs['stash_server']
+        self.stash_server = kwargs.get('stash_server', False)
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
 
@@ -96,7 +96,7 @@ class Imhotep(object):
                 return GithubPRReporter(self.requester,
                                         self.pr_number)
         elif self.commit is not None:
-            return service.CommitReporter(self.requester)
+            return CommitReporter(self.requester)
 
     def get_filenames(self, entries, requested_set=None):
         filenames = set([x.result_filename for x in entries])
@@ -167,9 +167,10 @@ def gen_imhotep(**kwargs):
         Manager = RepoManager
 
     manager = Manager(authenticated=kwargs['authenticated'],
-                          cache_directory=kwargs['cache_directory'],
-                          tools=tools,
-                          executor=run, stash_url=kwargs['stash_ssh_server'])
+                      cache_directory=kwargs['cache_directory'],
+                      tools=tools,
+                      executor=run,
+                      stash_url=kwargs.get('stash_ssh_server', None))
 
     if kwargs['pr_number']:
         if kwargs['github']:
