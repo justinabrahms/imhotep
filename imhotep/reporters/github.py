@@ -31,7 +31,7 @@ class GitHubReporter(Reporter):
             if result.status_code >= 400:
                 log.error("Error requesting comments from github. %s",
                           result.json())
-                return
+                return self._comments
             self._comments = result.json()
         return self._comments
 

@@ -68,7 +68,7 @@ def test_get_comments_error():
     requester.get.return_value.status_code = 400
     pr = GitHubReporter(requester)
     result = pr.get_comments('example.com')
-    assert result is None
+    assert len(result) == 0
 
 
 def test_clean_already_reported():

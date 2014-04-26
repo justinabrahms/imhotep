@@ -139,6 +139,7 @@ class Imhotep(object):
 
 
 def gen_imhotep(**kwargs):
+    # TODO(justinabrahms): Interface should have a "are creds valid?" method
     req = http.BasicAuthRequester(kwargs['github_username'],
                                   kwargs['github_password'])
 

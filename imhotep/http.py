@@ -26,7 +26,12 @@ class BasicAuthRequester(object):
 
     def get(self, url):
         log.debug("Fetching %s", url)
-        return requests.get(url, auth=self.get_auth())
+
+        response = requests.get(url, auth=self.get_auth())
+        if response.status_code > 400:
+            log.warning("Error on GET to %s. Response: %s", url,
+                        response.content)
+        return response
 
     def delete(self, url):
         log.debug("Deleting %s", url)
@@ -34,7 +39,10 @@ class BasicAuthRequester(object):
 
     def post(self, url, payload):
         log.debug("Posting %s to %s", payload, url)
-        return requests.post(
-            url, data=json.dumps(payload),
-            auth=self.get_auth())
+        response = requests.post(url, data=json.dumps(payload),
+                                 auth=self.get_auth())
+        if response.status_code > 400:
+            log.warning("Error on POST to %s. Response: %s", url,
+                        response.content)
+        return response
 
