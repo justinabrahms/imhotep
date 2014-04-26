@@ -19,6 +19,14 @@ things on your system, lest we have version conflicts. Finally, we
 install the required packages.
 
 ```
+virtualenv env
+. env/bin/activate
+pip install imhotep
+```
+
+If you want to hack on imhotep, that looks more like this:
+
+```
 git clone git://github.com/justinabrahms/imhotep.git
 cd imhotep
 virtualenv env
@@ -46,7 +54,7 @@ two ways: either on a single commit or on a pull request.
 
 ### Commenting on a pull request
 ```
-python imhotep/main.py \
+    imhotep \
        --repo_name="justinabrahms/imhotep" \
        --github-username="your_username" \
        --github-password="a_sha_generated_by_github" \
@@ -55,7 +63,7 @@ python imhotep/main.py \
 
 ### Commenting on a single commit
 ```
-python imhotep/main.py \
+    imhotep \
        --repo_name="justinabrahms/imhotep" \
        --github-username="your_username" \
        --github-password="a_sha_generated_by_github" \
@@ -70,7 +78,7 @@ access token and use that for the `--github-password` above.
 
 ### Full Usage Info
 ```
-usage: imhotep/main.py [-h] [--config-file CONFIG_FILE] --repo_name REPO_NAME
+usage: imhotep [-h] [--config-file CONFIG_FILE] --repo_name REPO_NAME
                [--commit COMMIT] [--origin-commit ORIGIN_COMMIT]
                [--filenames FILENAMES [FILENAMES ...]] [--debug]
                [--github-username GITHUB_USERNAME]
