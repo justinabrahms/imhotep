@@ -7,9 +7,10 @@ import pkg_resources
 
 from imhotep.repomanagers import ShallowRepoManager, RepoManager
 from .reporters.printing import PrintingReporter
-from .reporters.github import CommitReporter, PRReporter
+#from .reporters.github import CommitReporter, PRReporter
+from .reporters.stash import CommitReporter, PRReporter
 from .diff_parser import DiffContextParser
-from .shas import get_pr_info, CommitInfo
+from .shas import CommitInfo, StashPR, GithubPR
 from imhotep import http
 from .errors import UnknownTools, NoCommitInfo
 
@@ -68,6 +69,7 @@ class Imhotep(object):
         self.manager = repo_manager
 
         self.commit_info = commit_info
+        # TODO: hardcoded
         self.repo_name = repo_name
         self.pr_number = pr_number
         self.commit = commit
@@ -78,6 +80,7 @@ class Imhotep(object):
             filenames = []
         self.requested_filenames = set(filenames)
         self.shallow = shallow_clone
+        self.kwargs = kwargs
 
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
@@ -131,7 +134,9 @@ class Imhotep(object):
                     error_count += 1
                     reporter.report_line(
                         repo.name, cinfo.origin, entry.result_filename,
-                        x, pos_map[x], violations['%s' % x])
+                        x, pos_map[x], violations['%s' % x],
+                        project=self.kwargs['project_name'],
+                        stash_host=self.kwargs['stash_host'])
 
                 log.info("%d violations.", error_count)
         finally:
@@ -140,8 +145,8 @@ class Imhotep(object):
 
 def gen_imhotep(**kwargs):
     # TODO(justinabrahms): Interface should have a "are creds valid?" method
-    req = http.BasicAuthRequester(kwargs['github_username'],
-                                  kwargs['github_password'])
+    req = http.BasicAuthRequester(kwargs['username'],
+                                  kwargs['password'])
 
     plugins = load_plugins()
     tools = get_tools(kwargs['linter'], plugins)
@@ -152,12 +157,15 @@ def gen_imhotep(**kwargs):
         Manager = RepoManager
 
     manager = Manager(authenticated=kwargs['authenticated'],
-                          cache_directory=kwargs['cache_directory'],
-                          tools=tools,
-                          executor=run)
+                      cache_directory=kwargs['cache_directory'],
+                      tools=tools,
+                      executor=run,
+                      stash_host=kwargs['stash_host'],
+                      project=kwargs['project_name'])
 
     if kwargs['pr_number']:
-        pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'])
+        PRInfo = StashPR if kwargs['stash_host'] else GithubPR
+        pr_info = PRInfo(req, kwargs['repo_name'], kwargs['pr_number'], **kwargs)
         commit_info = pr_info.to_commit_info()
     else:
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
@@ -196,8 +204,14 @@ def parse_args(args):
         type=str,
         help="Configuration file in json.")
     arg_parser.add_argument(
-        '--repo_name', required=True,
-        help="Github repository name in owner/repo format")
+        '--repo_name', required=False,
+        help="Repository name")
+    arg_parser.add_argument(
+        '--project_name', required=False,
+        help="Project name")
+    arg_parser.add_argument(
+        '--stash_host', required=False,
+        help="Stash Hostname")
     arg_parser.add_argument(
         '--commit',
         help="The sha of the commit to run static analysis on.")
@@ -214,10 +228,10 @@ def parse_args(args):
         action='store_true',
         help="Will dump debugging output and won't clean up after itself.")
     arg_parser.add_argument(
-        '--github-username',
+        '--username',
         help='Github user to post comments as.')
     arg_parser.add_argument(
-        '--github-password',
+        '--password',
         help='Github password for the above user.')
     arg_parser.add_argument(
         '--no-post',

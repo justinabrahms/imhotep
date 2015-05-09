@@ -8,20 +8,24 @@ from imhotep.errors import NoCommitInfo, UnknownTools
 from imhotep.http import NoGithubCredentials
 
 
-log = logging.getLogger(__name__)
+#log = logging.getLogger(__name__)
 
 
 def load_config(filename):
     config = {}
     if filename is not None:
         config_path = os.path.abspath(filename)
+        log = logging.getLogger(__name__)
         try:
             with open(config_path) as f:
                 config = json.loads(f.read())
-        except IOError:
-            log.error("Could not open config file %s", config_path)
-        except ValueError:
-            log.error("Could not parse config file %s", config_path)
+        # TODO: don't like this failing silently
+        except:
+            raise
+        #except IOError:
+            #log.error("Could not open config file %s", config_path)
+        #except ValueError:
+            #log.error("Could not parse config file %s", config_path)
     return config
 
 
@@ -31,12 +35,13 @@ def main():
     """
     args = app.parse_args(sys.argv[1:])
     params = args.__dict__
-    params.update(**load_config(args.config_file))
 
     if params['debug']:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig()
+
+    params.update(**load_config(args.config_file))
 
     try:
         imhotep = app.gen_imhotep(**params)

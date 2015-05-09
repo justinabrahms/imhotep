@@ -38,11 +38,15 @@ class BasicAuthRequester(object):
         return requests.delete(url, auth=self.get_auth())
 
     def post(self, url, payload):
-        log.debug("Posting %s to %s", payload, url)
+        headers = {
+            'Content-type': 'application/json',
+        }
         response = requests.post(url, data=json.dumps(payload),
-                                 auth=self.get_auth())
+                                 auth=self.get_auth(), headers=headers)
         if response.status_code > 400:
             log.warning("Error on POST to %s. Response: %s", url,
                         response.content)
+        log.debug("Response: %s", response.content)
         return response
+
 

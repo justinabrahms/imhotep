@@ -6,6 +6,6 @@ log = logging.getLogger(__name__)
 
 class Reporter(object):
     def report_line(self, repo_name, commit, file_name, line_number, position,
-                    message):
+                    message, **kwargs):
         raise NotImplementedError()
 

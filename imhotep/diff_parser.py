@@ -109,6 +109,7 @@ class DiffContextParser:
 
             # added line
             elif line.startswith('+'):
+                #import pudb; pudb.set_trace()
                 z.new_added(Line(after_line_number, position, line[1:]))
                 z.new_result(Line(after_line_number, position, line[1:]))
                 after_line_number += 1
