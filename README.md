@@ -2,7 +2,7 @@
 # Imhotep, the peaceful builder.
 
 [![Build Status](https://travis-ci.org/justinabrahms/imhotep.png?branch=master)](https://travis-ci.org/justinabrahms/imhotep)
-[![Coverage Status](https://coveralls.io/repos/justinabrahms/imhotep/badge.png?branch=master)](https://coveralls.io/r/justinabrahms/imhotep?branch=master)
+[![codecov.io](http://codecov.io/github/justinabrahms/imhotep/coverage.svg?branch=master)](http://codecov.io/github/justinabrahms/imhotep?branch=master)
 [![Requirements Status](https://requires.io/github/justinabrahms/imhotep/requirements.png?branch=master)](https://requires.io/github/justinabrahms/imhotep/requirements/?branch=master)
 
 ## What is it?
