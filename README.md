@@ -13,7 +13,7 @@ warnings.
 ## Want a hosted version?
 
 There's a hosted version of this at
-[http://betterdiff.com](http://betterdiff.com) with an actual support
+[https://betterdiff.com](https://betterdiff.com) with an actual support
 team, etc. If your company is interested in imhotep, consider checking
 it out.
 
