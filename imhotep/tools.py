@@ -59,8 +59,21 @@ class Tool(object):
         line_number, error_messages) or None to indicate no error.
 
         :param: dirname - directory the code is running in
+
+        For default implementation, regex in `self.response_format` is expected
+        to have the capture groups `filename`, `line`, `message` in order. If
+        not, override this method.
         """
-        raise NotImplementedError()
+        if not hasattr(self.response_format):
+            raise NotImplementedError()
+
+        match = self.response_format.search(line)
+        if match is not None:
+            if len(self.filenames) != 0:
+                if match.group('filename') not in self.filenames:
+                    return
+            filename, line, messages = match.groups()
+            return filename, line, messages
 
     def get_file_extensions(self):
         """
@@ -68,7 +81,9 @@ class Tool(object):
 
         eg: ['.py', '.js']
         """
-        raise NotImplementedError()
+        if not self.file_extensions:
+            raise NotImplementedError()
+        return self.file_extensions
 
     def get_command(self, dirname, linter_configs=set()):
         """
