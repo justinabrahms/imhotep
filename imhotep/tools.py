@@ -64,7 +64,7 @@ class Tool(object):
         to have the capture groups `filename`, `line`, `message` in order. If
         not, override this method.
         """
-        if not hasattr(self.response_format):
+        if not hasattr(self, 'response_format'):
             raise NotImplementedError()
 
         match = self.response_format.search(line)
