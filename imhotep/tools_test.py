@@ -1,6 +1,7 @@
 import re
 
 import mock
+import pytest
 
 from .tools import Tool
 from .testing_utils import calls_matching_re
@@ -111,3 +112,9 @@ def test_invoke_removes_dirname_prefix():
     retval = t.invoke('/my/full/path')
 
     assert 'and/extras' in retval.keys()
+
+
+def test_process_line_no_response_format():
+    t = Tool(command_executor='')
+    with pytest.raises(NotImplementedError):
+        t.process_line(dirname='/my/full/path', line='my line')
