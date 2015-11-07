@@ -36,11 +36,14 @@ class Tool(object):
 
         """
         retval = defaultdict(lambda: defaultdict(list))
-        extensions = ' -o '.join(['-name "*%s"' % ext for ext in
-                                  self.get_file_extensions()])
+        if len(filenames):
+            to_find = ' -o '.join(['-samefile "%s"' % f for f in filenames])
+        else:
+            to_find = ' -o '.join(['-name "*%s"' % ext for ext in
+                                      self.get_file_extensions()])
 
         cmd = 'find %s %s | xargs %s' % (
-            dirname, extensions, self.get_command(
+            dirname, to_find, self.get_command(
                 dirname,
                 linter_configs=linter_configs))
         result = self.executor(cmd)
