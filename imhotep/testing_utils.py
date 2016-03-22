@@ -31,7 +31,6 @@ class Requester(object):
         return JsonWrapper(self.fixture, 200)
 
 
-
 def calls_matching_re(mockObj, regex):
     matches = []
     for call in mockObj.call_args_list:
