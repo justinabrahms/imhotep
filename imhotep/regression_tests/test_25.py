@@ -15,6 +15,7 @@ index 0000000..78ce7f6
 +print "Works";
 """
 
+
 def test_file_adds_arent_off():
     parser = DiffContextParser(diff)
     results = parser.parse()
