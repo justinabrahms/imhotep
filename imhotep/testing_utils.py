@@ -16,6 +16,7 @@ class JsonWrapper(object):
     def json(self):
         return self.payload
 
+
 class Requester(object):
     def __init__(self, fixture):
         self.fixture = fixture
