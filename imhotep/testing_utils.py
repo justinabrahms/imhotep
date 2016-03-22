@@ -2,7 +2,11 @@ import os
 from collections import namedtuple
 
 dir = os.path.dirname(__file__)
-fixture_path = lambda s: os.path.join(dir, 'fixtures/', s)
+
+
+def fixture_path(s):
+    return os.path.join(dir, 'fixtures/', s)
+
 
 class JsonWrapper(object):
     def __init__(self, json, status):
