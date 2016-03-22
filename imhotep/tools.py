@@ -94,4 +94,3 @@ class Tool(object):
         run on over stdin.
         """
         raise NotImplementedError()
-
