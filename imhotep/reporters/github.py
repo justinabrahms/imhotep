@@ -17,9 +17,9 @@ class GitHubReporter(Reporter):
         converted into a string.
         """
         for comment in comments:
-            if ((comment['path'] == file_name
-                 and comment['position'] == position
-                 and comment['user']['login'] == self.requester.username)):
+            if ((comment['path'] == file_name and
+                 comment['position'] == position and
+                 comment['user']['login'] == self.requester.username)):
 
                 return [m for m in message if m not in comment['body']]
         return message
