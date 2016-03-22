@@ -152,9 +152,9 @@ def gen_imhotep(**kwargs):
         Manager = RepoManager
 
     manager = Manager(authenticated=kwargs['authenticated'],
-                          cache_directory=kwargs['cache_directory'],
-                          tools=tools,
-                          executor=run)
+                      cache_directory=kwargs['cache_directory'],
+                      tools=tools,
+                      executor=run)
 
     if kwargs['pr_number']:
         pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'])
