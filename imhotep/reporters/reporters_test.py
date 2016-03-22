@@ -11,8 +11,7 @@ def test_commit_url():
                    file_name='setup.py', line_number=10, position=0,
                    message="test")
 
-    assert requester.url == \
-           "https://api.github.com/repos/foo/bar/commits/sha/comments"
+    assert requester.url == "https://api.github.com/repos/foo/bar/commits/sha/comments"
 
 
 def test_pr_url():
@@ -22,17 +21,21 @@ def test_pr_url():
                    file_name='setup.py', line_number=10, position=0,
                    message="test")
 
-    assert requester.url == \
-           "https://api.github.com/repos/justinabrahms/imhotep/pulls/10/comments"
+    assert requester.url == "https://api.github.com/repos/justinabrahms/imhotep/pulls/10/comments"
 
 
 def test_pr_already_reported():
     requester = mock.MagicMock()
     requester.username = 'magicmock'
-    comments = [{'path': 'foo.py',
-                'position': 2,
-                'body': 'Get that out',
-                'user': {'login': 'magicmock'}}]
+    comments = [{
+        'path': 'foo.py',
+        'position': 2,
+        'body': 'Get that out',
+        'user': {
+            'login': 'magicmock'
+        }
+    }]
+
     pr = PRReporter(requester, 10)
     pr._comments = comments
     result = pr.report_line(repo_name='justinabrahms/imhotep', commit='sha',
