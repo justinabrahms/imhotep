@@ -176,7 +176,8 @@ def get_tools(whitelist, known_plugins):
     Filter all known plugins by a whitelist specified. If the whitelist is
     empty, default to all plugins.
     """
-    getpath = lambda c: "%s:%s" % (c.__module__, c.__class__.__name__)
+    def getpath(c):
+        return "%s:%s" % (c.__module__, c.__class__.__name__)
 
     tools = [x for x in known_plugins if getpath(x) in whitelist]
 
