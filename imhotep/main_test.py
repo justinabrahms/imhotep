@@ -67,6 +67,7 @@ def test_main__returns_false_if_missing_tools():
 
             assert main() is False
 
+
 def test_load_config__returns_json_content():
     with mock.patch('imhotep.main.open', create=True) as mock_open:
         mock_open.return_value = mock.MagicMock(spec=io.IOBase)
