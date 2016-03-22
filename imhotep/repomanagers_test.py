@@ -37,11 +37,13 @@ def test_cleanup_doesnt_call_without_clean_files():
     r.cleanup()
     assert not m.called
 
+
 def test_fetch():
     m = mock.Mock()
     r = RepoManager(executor=m, tools=[None])
     r.fetch('/tmp/a_dir', 'foo', 'newbranch')
     assert m.called_with('cd /tmp/a_dir && git fetch --depth=1 foo')
+
 
 def test_shallow_clone():
     m = mock.Mock()
@@ -52,6 +54,7 @@ def test_shallow_clone():
     assert m.called_with('cd /tmp/a_dir && git init')
     assert m.called_with('cd /tmp/a_dir && git remote add name url')
 
+
 def test_shallow_clone_call():
     m = mock.Mock()
     r = RepoManager(cache_directory="/weeble/wobble/",
@@ -60,6 +63,7 @@ def test_shallow_clone_call():
                     shallow_clone=True)
     r.clone_repo(repo_name, None, 'foo')
     assert m.called_with('cd /weeble/wobble/justinabrahms__imhotep && git init')
+
 
 def test_clone_dir_nocache():
     # TODO(justinabrahms): this test has side effects which generate temp
