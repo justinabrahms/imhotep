@@ -86,9 +86,9 @@ class Imhotep(object):
         if self.no_post:
             return PrintingReporter()
         if self.pr_number:
-            return PRReporter(self.requester, self.pr_number)
+            return PRReporter(self.requester, self.repo_name, self.pr_number)
         elif self.commit is not None:
-            return CommitReporter(self.requester)
+            return CommitReporter(self.requester, self.repo_name)
 
     def get_filenames(self, entries, requested_set=None):
         filenames = set([x.result_filename for x in entries])
@@ -96,24 +96,23 @@ class Imhotep(object):
             filenames = requested_set.intersection(filenames)
         return list(filenames)
 
-    def invoke(self):
+    def invoke(self, reporter=None, max_errors=float('inf')):
         cinfo = self.commit_info
-        reporter = self.get_reporter()
+        if not reporter:
+            reporter = self.get_reporter()
 
         try:
             repo = self.manager.clone_repo(self.repo_name,
                                            remote_repo=cinfo.remote_repo,
                                            ref=cinfo.ref)
-            diff = repo.diff_commit(cinfo.commit,
-                                    compare_point=cinfo.origin)
+            diff = repo.diff_commit(cinfo.commit, compare_point=cinfo.origin)
 
             # Move out to its own thing
             parser = DiffContextParser(diff)
             parse_results = parser.parse()
             filenames = self.get_filenames(parse_results,
                                            self.requested_filenames)
-            results = run_analysis(repo,
-                                   filenames=filenames)
+            results = run_analysis(repo, filenames=filenames)
 
             error_count = 0
             for entry in parse_results:
@@ -129,10 +128,17 @@ class Imhotep(object):
                     violating_lines)
                 for x in matching_numbers:
                     error_count += 1
+                    if error_count > max_errors:
+                        continue
                     reporter.report_line(
                         repo.name, cinfo.origin, entry.result_filename,
                         x, pos_map[x], violations['%s' % x])
 
+                if error_count > max_errors \
+                   and hasattr(reporter, 'post_comment'):
+                    reporter.post_comment(
+                        "There were too many ({error_count}) linting errors to"
+                        " continue.".format(error_count=error_count))
                 log.info("%d violations.", error_count)
         finally:
             self.manager.cleanup()
