@@ -86,9 +86,9 @@ class Imhotep(object):
         if self.no_post:
             return PrintingReporter()
         if self.pr_number:
-            return PRReporter(self.requester, self.pr_number)
+            return PRReporter(self.requester, self.repo_name, self.pr_number)
         elif self.commit is not None:
-            return CommitReporter(self.requester)
+            return CommitReporter(self.requester, self.repo_name)
 
     def get_filenames(self, entries, requested_set=None):
         filenames = set([x.result_filename for x in entries])
@@ -134,7 +134,8 @@ class Imhotep(object):
                         repo.name, cinfo.origin, entry.result_filename,
                         x, pos_map[x], violations['%s' % x])
 
-                if error_count > max_errors:
+                if error_count > max_errors \
+                   and hasattr(reporter, 'post_comment'):
                     reporter.post_comment(
                         "There were too many ({error_count}) linting errors to"
                         " continue.".format(error_count=error_count))
