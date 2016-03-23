@@ -98,6 +98,7 @@ def test_convert_message_to_string():
 def test_pr__post_comment():
     requester = mock.MagicMock()
     requester.username = 'magicmock'
+    requester.post.return_value.status_code = 200
     pr = PRReporter(requester, 'justinabrahms/imhotep', 10)
     pr.post_comment("my-message")
 
