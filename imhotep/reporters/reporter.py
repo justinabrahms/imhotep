@@ -9,3 +9,5 @@ class Reporter(object):
                     message):
         raise NotImplementedError()
 
+    def post_comment(self, comment):
+        raise NotImplementedError()
