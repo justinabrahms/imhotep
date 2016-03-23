@@ -93,3 +93,16 @@ class PRReporter(GitHubReporter):
         if result.status_code >= 400:
             log.error("Error posting line to github. %s", result.json())
         return result
+
+    def post_comment(self, message):
+        """
+        Comments on an issue, not on a particular line.
+        """
+        report_url = (
+            'https://api.github.com/repos/%s/issues/%s/comments'
+            % (self.repo_name, self.pr_number)
+        )
+        result = self.requester.post(report_url, {'body': message})
+        if result.status_code >= 400:
+            log.error("Error posting comment to github. %s", result.json())
+        return result

@@ -93,3 +93,12 @@ def test_convert_message_to_string():
     pr = GitHubReporter(requester, 'test-repo')
     result = pr.convert_message_to_string(message)
     assert result == '* foo\n* bar\n'
+
+
+def test_pr__post_comment():
+    requester = mock.MagicMock()
+    requester.username = 'magicmock'
+    pr = PRReporter(requester, 'justinabrahms/imhotep', 10)
+    pr.post_comment("my-message")
+
+    assert requester.post.called
