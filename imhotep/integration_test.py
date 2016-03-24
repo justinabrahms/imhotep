@@ -35,7 +35,7 @@ def test_github_post():
     pr = 1
     test_str = 'integration test error name'
     req = BasicAuthRequester(ghu, ghp)
-    r = PRReporter(req, pr)
+    r = PRReporter(req, repo, pr)
     r.report_line(repo, 'da6a127a285ae08d9bfcccb1cb62aef908485769', 'foo.py', 2, 3, test_str)
     comments = req.get('https://api.github.com/repos/%s/pulls/%s/comments' %
                        (repo, pr)).json()
@@ -55,8 +55,8 @@ def test_dont_post_duplicate_comments():
     pr = 1
     test_str = 'integration test error name'
     req = BasicAuthRequester(ghu, ghp)
-    r = PRReporter(req, pr)
-    args = [repo, 'da6a127a285ae08d9bfcccb1cb62aef908485769', 'foo.py', 2, 3, test_str]
+    r = PRReporter(req, repo, pr)
+    args = ['da6a127a285ae08d9bfcccb1cb62aef908485769', 'foo.py', 2, 3, test_str]
 
     r.report_line(*args)
     r.report_line(*args)  # should dedupe.

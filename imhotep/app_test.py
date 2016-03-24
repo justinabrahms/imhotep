@@ -240,3 +240,61 @@ def test_find_config__called_with_each_config_file():
 
         mock_glob.assert_has_calls([mock.call.glob('dirname/config'),
                                     mock.call.glob('dirname/another')])
+
+
+def test_invoke__reports_errors():
+    with open('imhotep/fixtures/two-block.diff') as f:
+        two_block = f.read()
+    reporter = mock.Mock()
+    manager = mock.Mock()
+    tool = mock.Mock()
+    tool.get_configs.side_effect = AttributeError
+    tool.invoke.return_value = {
+        'imhotep/diff_parser_test.py': {
+            '13': 'there was an error'
+        }
+    }
+    manager.clone_repo.return_value.diff_commit.return_value = two_block
+    manager.clone_repo.return_value.tools = [tool]
+    imhotep = Imhotep(
+        pr_number=1,
+        repo_manager=manager,
+        commit_info=mock.Mock(),
+    )
+    imhotep.invoke(reporter=reporter)
+
+    assert reporter.report_line.called
+    assert not reporter.post_comment.called
+
+
+def test_invoke__triggers_max_errors():
+    with open('imhotep/fixtures/10line.diff') as f:
+        ten_diff = f.read()
+    reporter = mock.Mock()
+    manager = mock.Mock()
+    tool = mock.Mock()
+    tool.get_configs.side_effect = AttributeError
+    tool.invoke.return_value = {
+        'f1.txt': {
+            '1': 'there was an error',
+            '2': 'there was an error',
+            '3': 'there was an error',
+            '4': 'there was an error',
+            '5': 'there was an error',
+            '6': 'there was an error',
+            '7': 'there was an error',
+            '8': 'there was an error',
+            '9': 'there was an error',
+        }
+    }
+    manager.clone_repo.return_value.diff_commit.return_value = ten_diff
+    manager.clone_repo.return_value.tools = [tool]
+    imhotep = Imhotep(
+        pr_number=1,
+        repo_manager=manager,
+        commit_info=mock.Mock(),
+    )
+    imhotep.invoke(reporter=reporter, max_errors=2)
+
+    assert reporter.report_line.call_count == 2
+    assert reporter.post_comment.called
