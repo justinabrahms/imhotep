@@ -131,7 +131,7 @@ class Imhotep(object):
                     if error_count > max_errors:
                         continue
                     reporter.report_line(
-                        repo.name, cinfo.origin, entry.result_filename,
+                        cinfo.origin, entry.result_filename,
                         x, pos_map[x], violations['%s' % x])
 
                 if error_count > max_errors \

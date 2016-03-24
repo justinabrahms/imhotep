@@ -10,6 +10,8 @@ from imhotep.testing_utils import fixture_path
 from .reporters.printing import PrintingReporter
 from .reporters.github import CommitReporter, PRReporter
 from .repositories import Repository, ToolsNotFound
+from .repomanagers import RepoManager
+from .tools import Tool
 from .diff_parser import Entry
 
 
@@ -245,9 +247,9 @@ def test_find_config__called_with_each_config_file():
 def test_invoke__reports_errors():
     with open('imhotep/fixtures/two-block.diff') as f:
         two_block = f.read()
-    reporter = mock.Mock()
-    manager = mock.Mock()
-    tool = mock.Mock()
+    reporter = mock.create_autospec(PRReporter)
+    manager = mock.create_autospec(RepoManager)
+    tool = mock.create_autospec(Tool)
     tool.get_configs.side_effect = AttributeError
     tool.invoke.return_value = {
         'imhotep/diff_parser_test.py': {
@@ -270,9 +272,9 @@ def test_invoke__reports_errors():
 def test_invoke__triggers_max_errors():
     with open('imhotep/fixtures/10line.diff') as f:
         ten_diff = f.read()
-    reporter = mock.Mock()
-    manager = mock.Mock()
-    tool = mock.Mock()
+    reporter = mock.create_autospec(PRReporter)
+    tool = mock.create_autospec(Tool)
+    manager = mock.create_autospec(RepoManager)
     tool.get_configs.side_effect = AttributeError
     tool.invoke.return_value = {
         'f1.txt': {
