@@ -39,8 +39,8 @@ class Tool(object):
         if len(filenames):
             to_find = ' -o '.join(['-samefile "%s"' % f for f in filenames])
         else:
-            to_find = ' -o '.join(['-name "*%s"' % ext for ext in
-                                      self.get_file_extensions()])
+            to_find = ' -o '.join(['-name "*%s"' % ext
+                                   for ext in self.get_file_extensions()])
 
         cmd = 'find %s %s | xargs %s' % (
             dirname, to_find, self.get_command(
@@ -94,4 +94,3 @@ class Tool(object):
         run on over stdin.
         """
         raise NotImplementedError()
-

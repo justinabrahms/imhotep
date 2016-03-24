@@ -27,8 +27,7 @@ class PRInfo(object):
 
     @property
     def has_remote_repo(self):
-        return self.json['base']['repo']['owner']['login'] != \
-               self.json['head']['repo']['owner']['login']
+        return self.json['base']['repo']['owner']['login'] != self.json['head']['repo']['owner']['login']
 
     @property
     def remote_repo(self):

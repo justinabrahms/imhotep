@@ -158,9 +158,9 @@ def gen_imhotep(**kwargs):
         Manager = RepoManager
 
     manager = Manager(authenticated=kwargs['authenticated'],
-                          cache_directory=kwargs['cache_directory'],
-                          tools=tools,
-                          executor=run)
+                      cache_directory=kwargs['cache_directory'],
+                      tools=tools,
+                      executor=run)
 
     if kwargs['pr_number']:
         pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'])
@@ -182,7 +182,8 @@ def get_tools(whitelist, known_plugins):
     Filter all known plugins by a whitelist specified. If the whitelist is
     empty, default to all plugins.
     """
-    getpath = lambda c: "%s:%s" % (c.__module__, c.__class__.__name__)
+    def getpath(c):
+        return "%s:%s" % (c.__module__, c.__class__.__name__)
 
     tools = [x for x in known_plugins if getpath(x) in whitelist]
 

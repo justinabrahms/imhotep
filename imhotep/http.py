@@ -45,4 +45,3 @@ class BasicAuthRequester(object):
             log.warning("Error on POST to %s. Response: %s", url,
                         response.content)
         return response
-

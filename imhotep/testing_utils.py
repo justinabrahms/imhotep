@@ -2,7 +2,11 @@ import os
 from collections import namedtuple
 
 dir = os.path.dirname(__file__)
-fixture_path = lambda s: os.path.join(dir, 'fixtures/', s)
+
+
+def fixture_path(s):
+    return os.path.join(dir, 'fixtures/', s)
+
 
 class JsonWrapper(object):
     def __init__(self, json, status):
@@ -11,6 +15,7 @@ class JsonWrapper(object):
 
     def json(self):
         return self.payload
+
 
 class Requester(object):
     def __init__(self, fixture):
@@ -24,7 +29,6 @@ class Requester(object):
         self.url = url
         self.data = data
         return JsonWrapper(self.fixture, 200)
-
 
 
 def calls_matching_re(mockObj, regex):

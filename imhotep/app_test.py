@@ -4,7 +4,7 @@ import json
 import mock
 
 from .app import (run_analysis, get_tools, UnknownTools, Imhotep, NoCommitInfo,
-    run, load_plugins, gen_imhotep, find_config)
+                  run, load_plugins, gen_imhotep, find_config)
 from imhotep.main import load_config
 from imhotep.testing_utils import fixture_path
 from .reporters.printing import PrintingReporter
@@ -37,12 +37,14 @@ def test_config_loading():
     c = load_config('doesnt_exist')
     assert isinstance(c, dict)
 
+
 def test_tools_invoked_on_repo():
     m = mock.MagicMock()
     m.invoke.return_value = {}
     repo = Repository('name', 'location', [m], None)
     run_analysis(repo)
     assert m.invoke.called
+
 
 def test_run_analysis__config_fetch_error_handled():
     mock_tool = mock.Mock()
@@ -52,6 +54,7 @@ def test_run_analysis__config_fetch_error_handled():
     repo = Repository('name', 'loc', [mock_tool], None)
 
     assert {} == run_analysis(repo)
+
 
 def test_tools_merges_tool_results():
     m = mock.MagicMock()
@@ -184,11 +187,13 @@ def gen_imhotep_dict():
         'pr_number': None,
     }
 
+
 def test_gen_imhotep__returns_instance():
     kwargs = gen_imhotep_dict()
     kwargs['commit'] = 'abcdef0'
     retval = gen_imhotep(**kwargs)
     assert isinstance(retval, Imhotep)
+
 
 def test_gen_imhotep__shallow_pr():
     kwargs = gen_imhotep_dict()
@@ -217,6 +222,7 @@ def test_find_config__glob_multi_results():
 
     assert retval == set(['setup.py', 'foo.py', 'bar.py'])
 
+
 def test_find_config__prefix_dirname():
     with mock.patch('glob.glob') as mock_glob:
         mock_glob.return_value = []
@@ -224,6 +230,7 @@ def test_find_config__prefix_dirname():
         find_config('dirname', ['config'])
 
         mock_glob.assert_called_once_with('dirname/config')
+
 
 def test_find_config__called_with_each_config_file():
     with mock.patch('glob.glob') as mock_glob:

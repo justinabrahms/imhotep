@@ -14,7 +14,7 @@ setup(
         'six',
     ],
     extras_require={'pylint': 'PyLint'},
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'imhotep = imhotep.main:main',
         ],

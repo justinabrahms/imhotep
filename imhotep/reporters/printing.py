@@ -20,4 +20,3 @@ class PrintingReporter(Reporter):
                   'message': message,
                   'filename': file_name
               })
-
