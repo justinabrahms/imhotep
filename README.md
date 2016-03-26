@@ -91,7 +91,7 @@ usage: imhotep [-h] [--config-file CONFIG_FILE] --repo_name REPO_NAME
                [--github-username GITHUB_USERNAME]
                [--github-password GITHUB_PASSWORD] [--no-post]
                [--authenticated] [--pr-number PR_NUMBER]
-               [--cache-directory CACHE_DIRECTORY]
+               [--cache-directory CACHE_DIRECTORY] [--report-file-violations]
 
 Posts static analysis results to github.
 
@@ -119,6 +119,9 @@ optional arguments:
                         Number of the pull request to comment on
   --cache-directory CACHE_DIRECTORY
                         Path to directory to cache the repository
+  --report-file-violations
+                        Report file-level violations, i.e. those not on
+                        individual lines
 ```
 
 Note: if you get a error where the plugin cannot find `imhotep.tools`, make
