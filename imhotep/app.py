@@ -117,9 +117,13 @@ class Imhotep(object):
             error_count = 0
             for entry in parse_results:
                 added_lines = [l.number for l in entry.added_lines]
-                pos_map = {}
+                pos_map = {0: min(l.position for l in entry.added_lines)}
                 for x in entry.added_lines:
                     pos_map[x.number] = x.position
+
+                if True:
+                    # "magic" value of line 0 represents file-level results.
+                    added_lines.append(0)
 
                 violations = results.get(entry.result_filename, {})
                 violating_lines = [int(l) for l in violations.keys()]

@@ -300,3 +300,27 @@ def test_invoke__triggers_max_errors():
 
     assert reporter.report_line.call_count == 2
     assert reporter.post_comment.called
+
+def test_invoke__reports_file_errors():
+    with open('imhotep/fixtures/two-block.diff') as f:
+        two_block = f.read()
+    reporter = mock.create_autospec(PRReporter)
+    manager = mock.create_autospec(RepoManager)
+    tool = mock.create_autospec(Tool)
+    tool.get_configs.side_effect = AttributeError
+    tool.invoke.return_value = {
+        'imhotep/diff_parser_test.py': {
+            '0': 'imports are not sorted in this file'
+        }
+    }
+    manager.clone_repo.return_value.diff_commit.return_value = two_block
+    manager.clone_repo.return_value.tools = [tool]
+    imhotep = Imhotep(
+        pr_number=1,
+        repo_manager=manager,
+        commit_info=mock.Mock(),
+    )
+    imhotep.invoke(reporter=reporter)
+
+    assert reporter.report_line.called
+    assert not reporter.post_comment.called
