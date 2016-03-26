@@ -61,7 +61,8 @@ class Imhotep(object):
                  repo_name=None, pr_number=None,
                  commit_info=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
-                 filenames=None, shallow_clone=False, **kwargs):
+                 filenames=None, shallow_clone=False,
+                 report_file_violations=False, **kwargs):
         # TODO(justinabrahms): kwargs exist until we handle cli params better
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
         self.requester = requester
@@ -78,6 +79,7 @@ class Imhotep(object):
             filenames = []
         self.requested_filenames = set(filenames)
         self.shallow = shallow_clone
+        self.report_file_violations = report_file_violations
 
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
@@ -121,7 +123,7 @@ class Imhotep(object):
                 for x in entry.added_lines:
                     pos_map[x.number] = x.position
 
-                if True:
+                if self.report_file_violations:
                     # "magic" value of line 0 represents file-level results.
                     added_lines.append(0)
 
@@ -256,6 +258,10 @@ def parse_args(args):
     arg_parser.add_argument(
         '--shallow',
         help="Performs a shallow clone of the repo",
+        action="store_true")
+    arg_parser.add_argument(
+        '--report-file-violations',
+        help="Report file-level violations, i.e. those not on individual lines",
         action="store_true")
     # parse out repo name
     return arg_parser.parse_args(args)

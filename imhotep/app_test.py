@@ -319,8 +319,23 @@ def test_invoke__reports_file_errors():
         pr_number=1,
         repo_manager=manager,
         commit_info=mock.Mock(),
+        report_file_violations=True,
     )
     imhotep.invoke(reporter=reporter)
 
     assert reporter.report_line.called
+    assert not reporter.post_comment.called
+
+    # Reset mock and ensure that the default case is no file-level violations.
+    reporter.reset_mock()
+
+    imhotep = Imhotep(
+        pr_number=1,
+        repo_manager=manager,
+        commit_info=mock.Mock(),
+        # report_file_violations is False by default
+    )
+    imhotep.invoke(reporter=reporter)
+
+    assert not reporter.report_line.called
     assert not reporter.post_comment.called
