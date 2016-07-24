@@ -10,6 +10,6 @@ class Reporter(object):
     be used to notify the user that lint stopped running due to a critical
     number of errors.
     """
-    def report_line(self, repo_name, commit, file_name, line_number, position,
+    def report_line(self, commit, file_name, line_number, position,
                     message):
         raise NotImplementedError()
