@@ -1,6 +1,7 @@
 import mock
 
 from imhotep.reporters.github import CommitReporter, GitHubReporter, PRReporter
+from imhotep.reporters.printing import PrintingReporter
 from imhotep.testing_utils import Requester
 
 
@@ -106,3 +107,14 @@ def test_pr__post_comment():
     pr.post_comment("my-message")
 
     assert requester.post.called
+
+
+def test_printing_reporter_report_line():
+    # smoke test to make sure the string interpolation doesn't explode
+    PrintingReporter().report_line(
+        commit='commit',
+        file_name='file.py',
+        line_number=123,
+        position=1,
+        message='message'
+    )
