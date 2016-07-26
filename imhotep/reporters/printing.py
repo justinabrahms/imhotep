@@ -1,5 +1,4 @@
 import logging
-from six import string_types
 from .reporter import Reporter
 
 log = logging.getLogger(__name__)
@@ -11,9 +10,7 @@ class PrintingReporter(Reporter):
               "commit: %(commit)s\n"
               "position: %(position)s\n"
               "message: %(message)s\n"
-              "file: %(filename)s\n"
-              "repo: %(repo)s\n" % {
-                  'repo': repo_name,
+              "file: %(filename)s\n" % {
                   'commit': commit,
                   'position': position,
                   'message': message,
