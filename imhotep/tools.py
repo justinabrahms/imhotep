@@ -11,6 +11,9 @@ class Tool(object):
 
       {'relative_filename': {'line_number': [error1, error2]}}
       eg: {'imhotep/app.py': {'103': ['line too long']}}
+
+    Line numbers are indexed from 1, with the value 0 signifying a file-level
+    linting violation.
     """
 
     def __init__(self, command_executor, filenames=set()):
