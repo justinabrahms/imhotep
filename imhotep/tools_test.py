@@ -118,3 +118,21 @@ def test_process_line_no_response_format():
     t = Tool(command_executor='')
     with pytest.raises(NotImplementedError):
         t.process_line(dirname='/my/full/path', line='my line')
+
+
+def test_invoke_finds_named_files():
+    m = mock.Mock()
+    m.return_value = ""
+    t = ExampleTool(m)
+    t.invoke('/woobie/', filenames=['foo.exe'])
+
+    assert len(calls_matching_re(
+        m, re.compile(r'-samefile "foo\.exe"'))) > 0
+
+def test_invoke_bails_out_fast_if_no_filename_matches():
+    m = mock.Mock()
+    m.return_value = ""
+    t = ExampleTool(m)
+    t.invoke('/woobie/', filenames=['foo.py'])
+
+    assert not m.called

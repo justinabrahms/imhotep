@@ -40,7 +40,7 @@ class Tool(object):
         """
         retval = defaultdict(lambda: defaultdict(list))
         if len(filenames):
-            extensions = self.get_file_extensions()
+            extensions = [e[1:] for e in self.get_file_extensions()]
             filenames = [f for f in filenames if f.split('.')[-1] in extensions]
 
             if not filenames:
