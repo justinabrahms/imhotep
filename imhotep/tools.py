@@ -40,6 +40,8 @@ class Tool(object):
         """
         retval = defaultdict(lambda: defaultdict(list))
         if len(filenames):
+            extensions = self.get_file_extensions()
+            filenames = [f for f in filenames if f.split('.')[-1] in extensions]
             to_find = ' -o '.join(['-samefile "%s"' % f for f in filenames])
         else:
             to_find = ' -o '.join(['-name "*%s"' % ext
