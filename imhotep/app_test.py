@@ -70,6 +70,18 @@ def test_tools_merges_tool_results():
     assert 'b' in retval
 
 
+def test_tools_merges_results_without_overwriting():
+    m = mock.MagicMock()
+    m.invoke.return_value = {'a': {'b': [1]}}
+    m2 = mock.MagicMock()
+    m2.invoke.return_value = {'a': {'b': [2]}}
+    repo = Repository('name', 'location', [m, m2], None)
+    retval = run_analysis(repo)
+
+    assert 1 in retval['a']['b']
+    assert 2 in retval['a']['b']
+
+
 def test_tools_errors_on_no_tools():
     try:
         Repository('name', 'location', [], None)

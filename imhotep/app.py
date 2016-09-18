@@ -44,7 +44,13 @@ def run_analysis(repo, filenames=set(), linter_configs=set()):
         run_results = tool.invoke(repo.dirname,
                                   filenames=filenames,
                                   linter_configs=linter_configs)
-        results.update(run_results)
+
+        for fname, fresults in run_results.items():
+            results.setdefault(fname, {})
+            for lineno, violations in fresults.items():
+                results[fname].setdefault(lineno, [])
+                results[fname][lineno].extend(violations)
+
     return results
 
 
