@@ -51,7 +51,7 @@ def test_tools_invoked_on_repo():
 def test_run_analysis__config_fetch_error_handled():
     mock_tool = mock.Mock()
     mock_tool.get_configs.side_effect = AttributeError()
-    mock_tool.invoke.return_value = []
+    mock_tool.invoke.return_value = {}
 
     repo = Repository('name', 'loc', [mock_tool], None)
 
@@ -60,9 +60,9 @@ def test_run_analysis__config_fetch_error_handled():
 
 def test_tools_merges_tool_results():
     m = mock.MagicMock()
-    m.invoke.return_value = {'a': 1}
+    m.invoke.return_value = {'a': {}}
     m2 = mock.MagicMock()
-    m2.invoke.return_value = {'b': 2}
+    m2.invoke.return_value = {'b': {}}
     repo = Repository('name', 'location', [m, m2], None)
     retval = run_analysis(repo)
 
