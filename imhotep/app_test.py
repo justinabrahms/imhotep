@@ -60,9 +60,9 @@ def test_run_analysis__config_fetch_error_handled():
 
 def test_tools_merges_tool_results():
     m = mock.MagicMock()
-    m.invoke.return_value = {'a': {}}
+    m.invoke.return_value = {'a': {'4': ['a violation']}}
     m2 = mock.MagicMock()
-    m2.invoke.return_value = {'b': {}}
+    m2.invoke.return_value = {'b': {'32': ['another violation']}}
     repo = Repository('name', 'location', [m, m2], None)
     retval = run_analysis(repo)
 

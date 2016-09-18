@@ -1,7 +1,8 @@
 import argparse
+from collections import defaultdict
+import glob
 import logging
 import subprocess
-import glob
 
 import pkg_resources
 
@@ -31,7 +32,7 @@ def find_config(dirname, config_filenames):
 
 
 def run_analysis(repo, filenames=set(), linter_configs=set()):
-    results = {}
+    results = defaultdict(lambda: defaultdict(list))
     for tool in repo.tools:
         log.debug("running %s" % tool.__class__.__name__)
         configs = {}
@@ -46,9 +47,7 @@ def run_analysis(repo, filenames=set(), linter_configs=set()):
                                   linter_configs=linter_configs)
 
         for fname, fresults in run_results.items():
-            results.setdefault(fname, {})
             for lineno, violations in fresults.items():
-                results[fname].setdefault(lineno, [])
                 results[fname][lineno].extend(violations)
 
     return results
