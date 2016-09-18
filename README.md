@@ -187,3 +187,25 @@ in peace". In keeping with that name, the goal of this tool is to keep
 code reviews peaceful and productive by having robots point out the
 nitpicky details, leaving people to critique bigger picture things,
 not spacing and misspelling issues.
+
+
+# Release Notes
+## 1.1.0
+
+This is the first release where I'm tracking release notes. This
+release is majoritively the work of danpalmer. Thanks, Dan!
+
+Features:
+- Support for file level violations
+
+Backwards incompatible change:
+- The printer reporter was broken, not using the correct interface for
+  reporting individual lines. I've chosen to not bump the major
+  version, because this change was to get something to work. Any work
+  built on top of this class would have not be operational code, so
+  I'm not worried about breaking someone.
+
+Bugfixes:
+- Different reporters that report errors on the same line don't
+  clobber each other.
+- File extensions are properly filtered before reporting.
