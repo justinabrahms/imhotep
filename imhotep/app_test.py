@@ -281,6 +281,30 @@ def test_invoke__reports_errors():
     assert not reporter.post_comment.called
 
 
+def test_invoke__skips_empty_files():
+    with open('imhotep/fixtures/deleted_file.diff') as f:
+        deleted_file = f.read()
+    reporter = mock.create_autospec(PRReporter)
+    manager = mock.create_autospec(RepoManager)
+    tool = mock.create_autospec(Tool)
+    tool.get_configs.side_effect = AttributeError
+    tool.invoke.return_value = {
+        'imhotep/diff_parser_test.py': {
+            '13': 'there was an error'
+        }
+    }
+    manager.clone_repo.return_value.diff_commit.return_value = deleted_file
+    manager.clone_repo.return_value.tools = [tool]
+    imhotep = Imhotep(
+        pr_number=1,
+        repo_manager=manager,
+        commit_info=mock.Mock(),
+    )
+    imhotep.invoke(reporter=reporter)
+
+    assert not reporter.report_line.called
+
+
 def test_invoke__triggers_max_errors():
     with open('imhotep/fixtures/10line.diff') as f:
         ten_diff = f.read()
@@ -312,6 +336,7 @@ def test_invoke__triggers_max_errors():
 
     assert reporter.report_line.call_count == 2
     assert reporter.post_comment.called
+
 
 def test_invoke__reports_file_errors():
     with open('imhotep/fixtures/two-block.diff') as f:
