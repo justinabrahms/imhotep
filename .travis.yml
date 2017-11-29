@@ -1,15 +1,15 @@
 language: python
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "pypy"
 env:
-  matrix:
-  - TOX_ENV=py27
-  - TOX_ENV=py34
-  - TOX_ENV=py35
-  - TOX_ENV=py36
-  - TOX_ENV=pypy
   global:
   - GITHUB_USERNAME="imhotepbot"
   - secure: Oziz2mESs97bcb4Z62UspS30gvjWViUcBrErqSLJ2cDqK7gpPOHMPNMwhLmnuTgjBjf4M+FhJRG6yasTM7bBtD6joVbsxnfNb5kRUehOeCBrlQcuQMVdlwR5EuvWAb17otIo7ILyZnd+9cRd3aR2HYtEjJuvHMG6GwaotWGZkAw=
   - secure: VsmZuDJInButWe34ZjFYI5nDqVA3+Hm2upMiuz/hMzyjK0+GFvnReM0iiFTkX584ANIBl/ISdTHY0f5l7aTKHO6twQ2D7P7vbN2oBCdvZLkliLWgA0jPsU79kqgpYI8jFQ/BumhfTDiXDz4/mjBLDvah1rHXyIHLKB/Ks8VwCa4=
-install: pip install tox codecov
-script: tox -e $TOX_ENV
+install: pip install tox codecov tox-travis
+script: tox
 after_success: codecov
