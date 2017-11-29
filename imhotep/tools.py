@@ -53,7 +53,7 @@ class Tool(object):
             to_find = ' -o '.join(['-name "*%s"' % ext
                                    for ext in self.get_file_extensions()])
 
-        cmd = 'find %s %s | xargs %s' % (
+        cmd = 'find %s -path "*/%s" | xargs %s' % (
             dirname, to_find, self.get_command(
                 dirname,
                 linter_configs=linter_configs))
