@@ -190,7 +190,12 @@ not spacing and misspelling issues.
 
 
 # Release Notes
-## 1.1.0
+### 1.1.1
+
+Bugfixes:
+- Improved discovery of build tools
+
+### 1.1.0
 
 This is the first release where I'm tracking release notes. This
 release is majoritively the work of danpalmer. Thanks, Dan!
