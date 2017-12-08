@@ -1,9 +1,9 @@
 ![Imhotep](https://raw.github.com/justinabrahms/imhotep/master/imhotep.png)
 # Imhotep, the peaceful builder.
 
-[![Build Status](https://travis-ci.org/justinabrahms/imhotep.png?branch=master)](https://travis-ci.org/justinabrahms/imhotep)
+[![Build Status](https://travis-ci.org/justinabrahms/imhotep.svg?branch=master)](https://travis-ci.org/justinabrahms/imhotep)
 [![codecov.io](http://codecov.io/github/justinabrahms/imhotep/coverage.svg?branch=master)](http://codecov.io/github/justinabrahms/imhotep?branch=master)
-[![Requirements Status](https://requires.io/github/justinabrahms/imhotep/requirements.png?branch=master)](https://requires.io/github/justinabrahms/imhotep/requirements/?branch=master)
+[![Requirements Status](https://requires.io/github/justinabrahms/imhotep/requirements.svg?branch=master)](https://requires.io/github/justinabrahms/imhotep/requirements/?branch=master)
 
 ## What is it?
 Imhotep is a tool which will comment on commits coming into your
