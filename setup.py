@@ -10,7 +10,7 @@ setup(
     author_email='justin@abrah.ms',
     description='A tool to pipe linters into code review',
     install_requires=[
-        'requests==2.9.1',
+        'requests==2.18.4',
         'six',
     ],
     extras_require={'pylint': 'PyLint'},
