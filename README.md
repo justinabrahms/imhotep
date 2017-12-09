@@ -18,7 +18,7 @@ virtualenv which will keep our python packages separate from other
 things on your system, lest we have version conflicts. Finally, we
 install the required packages.
 
-```
+```bash
 virtualenv env
 . env/bin/activate
 pip install imhotep
@@ -26,7 +26,7 @@ pip install imhotep
 
 If you want to hack on imhotep, that looks more like this:
 
-```
+```bash
 git clone git://github.com/justinabrahms/imhotep.git
 cd imhotep
 virtualenv env
@@ -53,7 +53,7 @@ two ways: either on a single commit or on a pull request.
 
 
 ### Commenting on a pull request
-```
+```bash
     imhotep \
        --repo_name="justinabrahms/imhotep" \
        --github-username="your_username" \
@@ -62,7 +62,7 @@ two ways: either on a single commit or on a pull request.
 ```
 
 ### Commenting on a single commit
-```
+```bash
     imhotep \
        --repo_name="justinabrahms/imhotep" \
        --github-username="your_username" \
