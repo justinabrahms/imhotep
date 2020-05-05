@@ -1,6 +1,6 @@
 logilab-astng==0.24.3
 logilab-common==1.6.1
-pylint==2.5.0
+pylint==2.5.1
 requests==2.23.0
 # wsgiref==0.1.2
 pytest
