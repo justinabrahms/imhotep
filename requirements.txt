@@ -1,5 +1,5 @@
 logilab-astng==0.24.3
-logilab-common==1.6.2
+logilab-common==1.6.3
 pylint==2.5.2
 requests==2.23.0
 # wsgiref==0.1.2
