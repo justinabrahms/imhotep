@@ -259,7 +259,7 @@ def test_find_config__called_with_each_config_file():
 
 def test_invoke__reports_errors():
     with open('imhotep/fixtures/two-block.diff') as f:
-        two_block = f.read()
+        two_block = bytes(f.read(), 'utf-8')
     reporter = mock.create_autospec(PRReporter)
     manager = mock.create_autospec(RepoManager)
     tool = mock.create_autospec(Tool)
@@ -284,7 +284,7 @@ def test_invoke__reports_errors():
 
 def test_invoke__skips_empty_files():
     with open('imhotep/fixtures/deleted_file.diff') as f:
-        deleted_file = f.read()
+        deleted_file = bytes(f.read(), 'utf-8')
     reporter = mock.create_autospec(PRReporter)
     manager = mock.create_autospec(RepoManager)
     tool = mock.create_autospec(Tool)
@@ -308,7 +308,7 @@ def test_invoke__skips_empty_files():
 
 def test_invoke__triggers_max_errors():
     with open('imhotep/fixtures/10line.diff') as f:
-        ten_diff = f.read()
+        ten_diff = bytes(f.read(), 'utf-8')
     reporter = mock.create_autospec(PRReporter)
     tool = mock.create_autospec(Tool)
     manager = mock.create_autospec(RepoManager)
@@ -341,7 +341,7 @@ def test_invoke__triggers_max_errors():
 
 def test_invoke__reports_file_errors():
     with open('imhotep/fixtures/two-block.diff') as f:
-        two_block = f.read()
+        two_block = bytes(f.read(), 'utf-8')
     reporter = mock.create_autospec(PRReporter)
     manager = mock.create_autospec(RepoManager)
     tool = mock.create_autospec(Tool)

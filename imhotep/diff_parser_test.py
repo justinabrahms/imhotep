@@ -38,10 +38,10 @@ def test_skip_line__noskip():
 
 
 with open(fixture_path('two-block.diff')) as f:
-    two_block = f.read()
+    two_block = bytes(f.read(), 'utf-8')
 
 with open(fixture_path('two-file.diff')) as f:
-    two_file = f.read()
+    two_file = bytes(f.read(), 'utf-8')
 
 
 def test_multi_block_single_file():
