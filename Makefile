@@ -8,5 +8,5 @@ upload: test
 	env/bin/python setup.py sdist upload
 
 env:
-	virtualenv env
+	python -m venv env
 	env/bin/pip install -r requirements.txt

@@ -199,6 +199,7 @@ def gen_imhotep_dict():
         'authenticated': False,
         'cache_directory': '/tmp',
         'pr_number': None,
+        'github_domain': 'github.com',
     }
 
 
@@ -215,7 +216,7 @@ def test_gen_imhotep__shallow_pr():
     kwargs['shallow'] = True
     kwargs['repo_name'] = 'user/repo'
 
-    with mock.patch('imhotep.http.BasicAuthRequester') as mock_gh_req:
+    with mock.patch('imhotep.http_client.BasicAuthRequester') as mock_gh_req:
         mock_gh_req.return_value.get.return_value.json.return_value = remote_json_fixture
         retval = gen_imhotep(**kwargs)
     assert isinstance(retval, Imhotep)

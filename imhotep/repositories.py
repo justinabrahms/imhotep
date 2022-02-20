@@ -12,19 +12,21 @@ class Repository(object):
     Represents a github repository (both in the abstract and on disk).
     """
 
-    def __init__(self, name, loc, tools, executor, shallow=False):
+    def __init__(self, name, loc, tools, executor, shallow=False, domain='github.com'):
         if len(tools) == 0:
             raise ToolsNotFound()
+
 
         self.name = name
         self.dirname = loc
         self.tools = tools
         self.executor = executor
         self.shallow = shallow
+        self.domain = domain
 
     @property
     def download_location(self):
-        return "git://github.com/%s.git" % self.name
+        return "https://%s/%s.git" % (self.domain, self.name)
 
     def apply_commit(self, commit):
         """
@@ -49,4 +51,4 @@ class Repository(object):
 class AuthenticatedRepository(Repository):
     @property
     def download_location(self):
-        return "git@github.com:%s.git" % self.name
+        return "git@%s:%s.git" % (self.domain, self.name)

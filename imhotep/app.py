@@ -11,7 +11,7 @@ from .reporters.printing import PrintingReporter
 from .reporters.github import CommitReporter, PRReporter
 from .diff_parser import DiffContextParser
 from .shas import get_pr_info, CommitInfo
-from imhotep import http
+from imhotep import http_client
 from .errors import UnknownTools, NoCommitInfo
 
 
@@ -66,7 +66,7 @@ class Imhotep(object):
                  repo_name=None, pr_number=None,
                  commit_info=None,
                  commit=None, origin_commit=None, no_post=None, debug=None,
-                 filenames=None, shallow_clone=False,
+                 filenames=None, shallow_clone=False, github_domain=None,
                  report_file_violations=False, **kwargs):
         # TODO(justinabrahms): kwargs exist until we handle cli params better
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
@@ -84,6 +84,7 @@ class Imhotep(object):
             filenames = []
         self.requested_filenames = set(filenames)
         self.shallow = shallow_clone
+        self.github_domain = github_domain
         self.report_file_violations = report_file_violations
 
         if self.commit is None and self.pr_number is None:
@@ -159,7 +160,7 @@ class Imhotep(object):
 
 def gen_imhotep(**kwargs):
     # TODO(justinabrahms): Interface should have a "are creds valid?" method
-    req = http.BasicAuthRequester(kwargs['github_username'],
+    req = http_client.BasicAuthRequester(kwargs['github_username'],
                                   kwargs['github_password'])
 
     plugins = load_plugins()
@@ -170,13 +171,15 @@ def gen_imhotep(**kwargs):
     else:
         Manager = RepoManager
 
+    domain = kwargs['github_domain']
     manager = Manager(authenticated=kwargs['authenticated'],
                       cache_directory=kwargs['cache_directory'],
                       tools=tools,
-                      executor=run)
+                      executor=run,
+                      domain=domain)
 
     if kwargs['pr_number']:
-        pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'])
+        pr_info = get_pr_info(req, kwargs['repo_name'], kwargs['pr_number'], domain)
         commit_info = pr_info.to_commit_info()
     else:
         # TODO(justinabrahms): origin & remote_repo doesnt work for commits
@@ -187,7 +190,7 @@ def gen_imhotep(**kwargs):
 
     return Imhotep(
         requester=req, repo_manager=manager, commit_info=commit_info,
-        shallow_clone=shallow_clone, **kwargs)
+        shallow_clone=shallow_clone, domain=domain, **kwargs)
 
 
 def get_tools(whitelist, known_plugins):
@@ -266,6 +269,10 @@ def parse_args(args):
         '--shallow',
         help="Performs a shallow clone of the repo",
         action="store_true")
+    arg_parser.add_argument(
+        '--github-domain',
+        help="You can provide an alternative domain, if you\'re using github enterprise, for instance",
+        default="github.com")
     arg_parser.add_argument(
         '--report-file-violations',
         help="Report file-level violations, i.e. those not on individual lines",

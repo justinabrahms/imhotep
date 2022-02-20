@@ -5,7 +5,7 @@ import sys
 
 from imhotep import app
 from imhotep.errors import NoCommitInfo, UnknownTools
-from imhotep.http import NoGithubCredentials
+from imhotep.http_client import NoGithubCredentials
 
 
 log = logging.getLogger(__name__)

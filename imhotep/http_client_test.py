@@ -1,7 +1,7 @@
 import json
 import mock
 
-from imhotep.http import BasicAuthRequester
+from imhotep.http_client import BasicAuthRequester
 
 
 def test_auth():

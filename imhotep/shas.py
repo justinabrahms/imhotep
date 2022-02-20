@@ -42,8 +42,15 @@ class PRInfo(object):
                           self.head_ref)
 
 
-def get_pr_info(requester, reponame, number):
+def get_pr_info(requester, reponame, number, domain):
     "Returns the PullRequest as a PRInfo object"
+    # API locations are different for non-github.com locales. https://docs.github.com/en/enterprise-server@3.2/rest/guides/getting-started-with-the-rest-api
+
+    if domain == 'github.com':
+        api_url = 'api.%s' % domain
+    else:
+        api_url = '%s/api/v3' % domain
+
     resp = requester.get(
-        'https://api.github.com/repos/%s/pulls/%s' % (reponame, number))
+        'https://%s/repos/%s/pulls/%s' % (api_url, reponame, number))
     return PRInfo(resp.json())

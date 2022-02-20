@@ -16,7 +16,7 @@ import os
 
 import pytest
 
-from imhotep.http import BasicAuthRequester
+from imhotep.http_client import BasicAuthRequester
 from imhotep.reporters.github import PRReporter
 
 

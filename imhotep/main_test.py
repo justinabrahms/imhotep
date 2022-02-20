@@ -3,7 +3,7 @@ import mock
 
 from imhotep.app import parse_args
 from imhotep.errors import UnknownTools, NoCommitInfo
-from imhotep.http import NoGithubCredentials
+from imhotep.http_client import NoGithubCredentials
 from imhotep.main import main, load_config
 
 

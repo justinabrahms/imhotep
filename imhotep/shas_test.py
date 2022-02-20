@@ -71,5 +71,5 @@ def test_pr_info_remote_repo():
 
 def test_pr_info():
     r = Requester(remote_json_fixture)
-    get_pr_info(r, 'justinabrahms/imhotep', 10)
+    get_pr_info(r, 'justinabrahms/imhotep', 10, 'github.com')
     assert r.url == 'https://api.github.com/repos/justinabrahms/imhotep/pulls/10'
