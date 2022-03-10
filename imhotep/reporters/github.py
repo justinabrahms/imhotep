@@ -6,8 +6,9 @@ log = logging.getLogger(__name__)
 
 
 class GitHubReporter(Reporter):
-    def __init__(self, requester, repo_name):
+    def __init__(self, requester, domain, repo_name):
         self._comments = []
+        self.domain = domain
         self.repo_name = repo_name
         self.requester = requester
 
@@ -47,8 +48,8 @@ class GitHubReporter(Reporter):
 class CommitReporter(GitHubReporter):
     def report_line(self, commit, file_name, line_number, position, message):
         report_url = (
-            'https://api.github.com/repos/%s/commits/%s/comments'
-            % (self.repo_name, commit))
+            'https://%s/repos/%s/commits/%s/comments'
+            % (self.domain, self.repo_name, commit))
         comments = self.get_comments(report_url)
         message = self.clean_already_reported(comments, file_name,
                                               position, message)
@@ -65,14 +66,14 @@ class CommitReporter(GitHubReporter):
 
 
 class PRReporter(GitHubReporter):
-    def __init__(self, requester, repo_name, pr_number):
+    def __init__(self, requester, domain, repo_name, pr_number):
         self.pr_number = pr_number
-        super(PRReporter, self).__init__(requester, repo_name)
+        super(PRReporter, self).__init__(requester, domain, repo_name)
 
     def report_line(self, commit, file_name, line_number, position, message):
         report_url = (
-            'https://api.github.com/repos/%s/pulls/%s/comments'
-            % (self.repo_name, self.pr_number))
+            'https://%s/repos/%s/pulls/%s/comments'
+            % (self.domain, self.repo_name, self.pr_number))
         comments = self.get_comments(report_url)
         if isinstance(message, string_types):
             message = [message]
