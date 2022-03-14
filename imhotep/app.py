@@ -94,9 +94,9 @@ class Imhotep(object):
         if self.no_post:
             return PrintingReporter()
         if self.pr_number:
-            return PRReporter(self.requester, self.repo_name, self.pr_number)
+            return PRReporter(self.requester, self.github_domain, self.repo_name, self.pr_number)
         elif self.commit is not None:
-            return CommitReporter(self.requester, self.repo_name)
+            return CommitReporter(self.requester, self.github_domain, self.repo_name)
 
     def get_filenames(self, entries, requested_set=None):
         filenames = set([x.result_filename for x in entries])

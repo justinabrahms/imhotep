@@ -79,7 +79,8 @@ class DiffContextParser:
         position = 0
 
         for line in self.diff_text.splitlines():
-            line = line.decode('utf-8')
+            if type(line) is bytes:
+                line = line.decode('utf-8')
             # New File
             match = re.search(r'diff .*a/(?P<origin_filename>.*) '
                               r'b/(?P<result_filename>.*)', line)
