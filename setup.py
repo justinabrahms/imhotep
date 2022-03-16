@@ -9,7 +9,7 @@ setup(
     author="Justin Abrahms",
     author_email="justin@abrah.ms",
     description="A tool to pipe linters into code review",
-    python_requires=">=3.5",
+    python_requires=">=3.9",
     install_requires=[
         "requests==2.20.0",
         "six",
