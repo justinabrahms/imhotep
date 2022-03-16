@@ -88,7 +88,9 @@ usage: imhotep [-h] [--config-file CONFIG_FILE] --repo_name REPO_NAME
                [--github-username GITHUB_USERNAME]
                [--github-password GITHUB_PASSWORD] [--no-post]
                [--authenticated] [--pr-number PR_NUMBER]
-               [--cache-directory CACHE_DIRECTORY] [--report-file-violations]
+               [--cache-directory CACHE_DIRECTORY]
+               [--linter LINTER [LINTER ...]] [--shallow]
+               [--github-domain GITHUB_DOMAIN] [--report-file-violations]
 
 Posts static analysis results to github.
 
@@ -116,6 +118,12 @@ optional arguments:
                         Number of the pull request to comment on
   --cache-directory CACHE_DIRECTORY
                         Path to directory to cache the repository
+  --linter LINTER [LINTER ...]
+                        Path to linters to run, e.g. 'imhotep.tools:PyLint'
+  --shallow             Performs a shallow clone of the repo
+  --github-domain GITHUB_DOMAIN
+                        You can provide an alternative domain, if you're using
+                        github enterprise, for instance
   --report-file-violations
                         Report file-level violations, i.e. those not on
                         individual lines
