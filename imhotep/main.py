@@ -7,7 +7,6 @@ from imhotep import app
 from imhotep.errors import NoCommitInfo, UnknownTools
 from imhotep.http_client import NoGithubCredentials
 
-
 log = logging.getLogger(__name__)
 
 
@@ -18,7 +17,7 @@ def load_config(filename):
         try:
             with open(config_path) as f:
                 config = json.loads(f.read())
-        except IOError:
+        except OSError:
             log.error("Could not open config file %s", config_path)
         except ValueError:
             log.error("Could not parse config file %s", config_path)
@@ -33,7 +32,7 @@ def main():
     params = args.__dict__
     params.update(**load_config(args.config_file))
 
-    if params['debug']:
+    if params["debug"]:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig()
@@ -48,11 +47,11 @@ def main():
         return False
     except UnknownTools as e:
         log.error("Didn't find any of the specified linters.")
-        log.error("Known linters: %s", ', '.join(e.known))
+        log.error("Known linters: %s", ", ".join(e.known))
         return False
 
     imhotep.invoke()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

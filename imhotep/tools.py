@@ -1,10 +1,10 @@
-from collections import defaultdict
 import logging
+from collections import defaultdict
 
 log = logging.getLogger(__name__)
 
 
-class Tool(object):
+class Tool:
     """
     Tool represents a program that runs over source code. It returns a nested
     dictionary structure like:
@@ -40,30 +40,32 @@ class Tool(object):
         """
         retval = defaultdict(lambda: defaultdict(list))
         if len(filenames):
-            extensions = [e.lstrip('.') for e in self.get_file_extensions()]
-            filenames = [f for f in filenames if f.split('.')[-1] in extensions]
+            extensions = [e.lstrip(".") for e in self.get_file_extensions()]
+            filenames = [f for f in filenames if f.split(".")[-1] in extensions]
 
             if not filenames:
                 # There were a specified set of files, but none were the right
                 # extension. Different from the else-case below.
                 return {}
 
-            to_find = ' -o '.join(['-samefile "%s"' % f for f in filenames])
+            to_find = " -o ".join(['-samefile "%s"' % f for f in filenames])
         else:
-            to_find = ' -o '.join(['-name "*%s"' % ext
-                                   for ext in self.get_file_extensions()])
+            to_find = " -o ".join(
+                ['-name "*%s"' % ext for ext in self.get_file_extensions()]
+            )
 
-        cmd = 'find %s -path "*/%s" | xargs %s' % (
-            dirname, to_find, self.get_command(
-                dirname,
-                linter_configs=linter_configs))
+        cmd = 'find {} -path "*/{}" | xargs {}'.format(
+            dirname,
+            to_find,
+            self.get_command(dirname, linter_configs=linter_configs),
+        )
         result = self.executor(cmd)
-        for line in result.split('\n'):
+        for line in result.split("\n"):
             output = self.process_line(dirname, line)
             if output is not None:
                 filename, lineno, messages = output
                 if filename.startswith(dirname):
-                    filename = filename[len(dirname) + 1:]
+                    filename = filename[len(dirname) + 1 :]
                 retval[filename][lineno].append(messages)
         return retval
 
@@ -78,13 +80,13 @@ class Tool(object):
         to have the capture groups `filename`, `line`, `message` in order. If
         not, override this method.
         """
-        if not hasattr(self, 'response_format'):
+        if not hasattr(self, "response_format"):
             raise NotImplementedError()
 
         match = self.response_format.search(line)
         if match is not None:
             if len(self.filenames) != 0:
-                if match.group('filename') not in self.filenames:
+                if match.group("filename") not in self.filenames:
                     return
             filename, line, messages = match.groups()
             return filename, line, messages

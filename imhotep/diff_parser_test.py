@@ -37,11 +37,11 @@ def test_skip_line__noskip():
     assert not dcp.should_skip_line("+ this is a legit line")
 
 
-with open(fixture_path('two-block.diff')) as f:
-    two_block = bytes(f.read(), 'utf-8')
+with open(fixture_path("two-block.diff")) as f:
+    two_block = bytes(f.read(), "utf-8")
 
-with open(fixture_path('two-file.diff')) as f:
-    two_file = bytes(f.read(), 'utf-8')
+with open(fixture_path("two-file.diff")) as f:
+    two_file = bytes(f.read(), "utf-8")
 
 
 def test_multi_block_single_file():
@@ -67,8 +67,8 @@ def test_position_counting():
     entry = results[0]
 
     # First @@ is 0 and we count from there.
-    valid_positions = set([3, 9, 10, 11, 12])
-    assert set([x.position for x in entry.added_lines]) == valid_positions
+    valid_positions = {3, 9, 10, 11, 12}
+    assert {x.position for x in entry.added_lines} == valid_positions
 
 
 def test_two_file():
@@ -77,24 +77,18 @@ def test_two_file():
 
     entry1, entry2 = results
 
-    assert entry1.origin_filename == '.travis.yml'
-    assert entry1.result_filename == '.travis.yml'
-    assert entry2.origin_filename == 'requirements.txt'
-    assert entry2.result_filename == 'requirements.txt'
+    assert entry1.origin_filename == ".travis.yml"
+    assert entry1.result_filename == ".travis.yml"
+    assert entry2.origin_filename == "requirements.txt"
+    assert entry2.result_filename == "requirements.txt"
 
 
 def test_entry__clean():
-    e = Entry('fna', 'fnb')
+    e = Entry("fna", "fnb")
     assert not e.is_dirty()
 
 
 def test_entry__dirty_result():
-    e = Entry('fna', 'fnb')
-    e.new_result('line')
-    assert e.is_dirty()
-
-
-def test_entry__dirty_result():
-    e = Entry('fna', 'fnb')
-    e.new_origin('line')
+    e = Entry("fna", "fnb")
+    e.new_origin("line")
     assert e.is_dirty()

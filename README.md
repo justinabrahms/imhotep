@@ -1,9 +1,11 @@
 ![Imhotep](https://raw.github.com/justinabrahms/imhotep/master/imhotep.png)
 # Imhotep, the peaceful builder.
 
-[![Build Status](https://travis-ci.org/justinabrahms/imhotep.svg?branch=master)](https://travis-ci.org/justinabrahms/imhotep)
+[![Build Status](https://app.travis-ci.com/justinabrahms/imhotep.svg?branch=master)](https://app.travis-ci.com/github/justinabrahms/imhotep)
 [![codecov.io](http://codecov.io/github/justinabrahms/imhotep/coverage.svg?branch=master)](http://codecov.io/github/justinabrahms/imhotep?branch=master)
 [![Requirements Status](https://requires.io/github/justinabrahms/imhotep/requirements.svg?branch=master)](https://requires.io/github/justinabrahms/imhotep/requirements/?branch=master)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 ## What is it?
 Imhotep is a tool which will comment on commits coming into your
@@ -38,12 +40,14 @@ pip install -e .
 You'll also need to install the plugins you'd like to run. Examples
 include [jshint](https://github.com/justinabrahms/imhotep_jshint),
 [flake8](https://github.com/glogiotatidis/imhotep_flake8),
-[pep8](https://github.com/justinabrahms/imhotep_pep8), 
+[pep8](https://github.com/justinabrahms/imhotep_pep8),
 [pylint](https://github.com/justinabrahms/imhotep_pylint),
 [rubocop](https://github.com/scottjab/imhotep_rubocop),
 [foodcritic](https://github.com/scottjab/imhotep_foodcritic),
 and [jsl](https://github.com/mghayes/imhotep_jsl). You can
 install those with pip. Example: `pip install imhotep_jshint`.
+
+[Search on PyPI](https://pypi.org/search/?q=imhotep) for a full list.
 
 ## Usage
 
@@ -152,13 +156,9 @@ stanza to your `setup.py`. It looks like this.
 
 ```python
 setup(
-  # ...
-  entry_points={
-    'imhotep_linter': [
-      '.py = path.to.module:ToolClassName'
-    ]
-  }
-  # ...
+    # ...
+    entry_points={"imhotep_linter": [".py = path.to.module:ToolClassName"]}
+    # ...
 )
 ```
 
@@ -186,7 +186,8 @@ not spacing and misspelling issues.
 
 ### 3.0.0
 Backwards incompatible change:
-- Dropped support for Python < 3.5 and pypy.
+- Dropped support for Python < 3.9 and pypy.
+
 ### 1.1.1
 
 Bugfixes:

@@ -4,7 +4,6 @@ import logging
 import requests
 from requests.auth import HTTPBasicAuth
 
-
 log = logging.getLogger(__name__)
 
 
@@ -12,7 +11,7 @@ class NoGithubCredentials(Exception):
     pass
 
 
-class BasicAuthRequester(object):
+class BasicAuthRequester:
     """
     Object used for issuing authenticated API calls.
     """
@@ -29,8 +28,7 @@ class BasicAuthRequester(object):
 
         response = requests.get(url, auth=self.get_auth())
         if response.status_code > 400:
-            log.warning("Error on GET to %s. Response: %s", url,
-                        response.content)
+            log.warning("Error on GET to %s. Response: %s", url, response.content)
         return response
 
     def delete(self, url):
@@ -39,9 +37,7 @@ class BasicAuthRequester(object):
 
     def post(self, url, payload):
         log.debug("Posting %s to %s", payload, url)
-        response = requests.post(url, data=json.dumps(payload),
-                                 auth=self.get_auth())
+        response = requests.post(url, data=json.dumps(payload), auth=self.get_auth())
         if response.status_code > 400:
-            log.warning("Error on POST to %s. Response: %s", url,
-                        response.content)
+            log.warning("Error on POST to %s. Response: %s", url, response.content)
         return response

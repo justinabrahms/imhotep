@@ -7,15 +7,14 @@ class ToolsNotFound(Exception):
     pass
 
 
-class Repository(object):
+class Repository:
     """
     Represents a github repository (both in the abstract and on disk).
     """
 
-    def __init__(self, name, loc, tools, executor, shallow=False, domain='github.com'):
+    def __init__(self, name, loc, tools, executor, shallow=False, domain="github.com"):
         if len(tools) == 0:
             raise ToolsNotFound()
-
 
         self.name = name
         self.dirname = loc
@@ -26,13 +25,13 @@ class Repository(object):
 
     @property
     def download_location(self):
-        return "https://%s/%s.git" % (self.domain, self.name)
+        return f"https://{self.domain}/{self.name}.git"
 
     def apply_commit(self, commit):
         """
         Updates the repository to a given commit.
         """
-        self.executor("cd %s && git checkout %s" % (self.dirname, commit))
+        self.executor(f"cd {self.dirname} && git checkout {commit}")
 
     def diff_commit(self, commit, compare_point=None):
         """
@@ -42,7 +41,7 @@ class Repository(object):
         # data. Doesn't matter until we wrap this in a service.
         if compare_point is not None:
             self.apply_commit(compare_point)
-        return self.executor("cd %s && git diff %s" % (self.dirname, commit))
+        return self.executor(f"cd {self.dirname} && git diff {commit}")
 
     def __unicode__(self):
         return self.name
@@ -51,4 +50,4 @@ class Repository(object):
 class AuthenticatedRepository(Repository):
     @property
     def download_location(self):
-        return "git@%s:%s.git" % (self.domain, self.name)
+        return f"git@{self.domain}:{self.name}.git"
