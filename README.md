@@ -1,7 +1,7 @@
 ![Imhotep](https://raw.github.com/justinabrahms/imhotep/master/imhotep.png)
 # Imhotep, the peaceful builder.
 
-[![Build Status](https://travis-ci.org/justinabrahms/imhotep.svg?branch=master)](https://travis-ci.org/justinabrahms/imhotep)
+[![Build Status](https://app.travis-ci.com/justinabrahms/imhotep.svg?branch=master)](https://app.travis-ci.com/github/justinabrahms/imhotep)
 [![codecov.io](http://codecov.io/github/justinabrahms/imhotep/coverage.svg?branch=master)](http://codecov.io/github/justinabrahms/imhotep?branch=master)
 [![Requirements Status](https://requires.io/github/justinabrahms/imhotep/requirements.svg?branch=master)](https://requires.io/github/justinabrahms/imhotep/requirements/?branch=master)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
