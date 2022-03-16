@@ -1,7 +1,8 @@
-import mock
-from imhotep.repositories import Repository, AuthenticatedRepository
+from unittest import mock
 
-repo_name = 'justinabrahms/imhotep'
+from imhotep.repositories import AuthenticatedRepository, Repository
+
+repo_name = "justinabrahms/imhotep"
 
 
 def test_unauthed_download_location():
@@ -22,20 +23,20 @@ def test_unicode():
 
 def test_diff_commit():
     executor = mock.Mock()
-    uar = Repository(repo_name, '/loc/', [None], executor)
-    uar.diff_commit('commit-to-diff')
+    uar = Repository(repo_name, "/loc/", [None], executor)
+    uar.diff_commit("commit-to-diff")
     executor.assert_called_with("cd /loc/ && git diff commit-to-diff")
 
 
 def test_diff_commit__compare_point_applied():
     executor = mock.Mock()
-    uar = Repository(repo_name, '/loc/', [None], executor)
-    uar.diff_commit('commit-to-diff', compare_point='base')
+    uar = Repository(repo_name, "/loc/", [None], executor)
+    uar.diff_commit("commit-to-diff", compare_point="base")
     executor.assert_any_call("cd /loc/ && git checkout base")
 
 
 def test_apply_commit():
     executor = mock.Mock()
-    uar = Repository(repo_name, '/loc/', [None], executor)
-    uar.apply_commit('base')
+    uar = Repository(repo_name, "/loc/", [None], executor)
+    uar.apply_commit("base")
     executor.assert_called_with("cd /loc/ && git checkout base")

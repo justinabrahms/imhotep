@@ -4,7 +4,7 @@ index a44a3c6..13e8193 100644
 +++ b/imhotep/diff_parser_test.py
 @@ -1,5 +1,5 @@
  from imhotep.diff_parser import DiffContextParser
--    
+-
 +
  def test_skip_line__minus():
      dcp = DiffContextParser("")

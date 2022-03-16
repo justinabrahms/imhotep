@@ -19,4 +19,4 @@ index 0000000..78ce7f6
 def test_file_adds_arent_off():
     parser = DiffContextParser(diff)
     results = parser.parse()
-    assert 'class Foo' in results[0].added_lines[0].contents
+    assert "class Foo" in results[0].added_lines[0].contents

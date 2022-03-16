@@ -1,18 +1,18 @@
 """
 Thanks to @fridgei & @scottjab for the initial version of this code.
 """
-from collections import namedtuple
 import re
+from collections import namedtuple
 
 Line = namedtuple("Line", ["number", "position", "contents"])
 
 diff_re = re.compile(
-    "@@ \-(?P<removed_start>\d+),(?P<removed_length>\d+) "
-    "\+(?P<added_start>\d+),(?P<added_length>\d+) @@"
+    r"@@ \-(?P<removed_start>\d+),(?P<removed_length>\d+) "
+    r"\+(?P<added_start>\d+),(?P<added_length>\d+) @@"
 )
 
 
-class Entry(object):
+class Entry:
     def __init__(self, origin_filename, result_filename):
         self.origin_filename = origin_filename
         self.result_filename = result_filename
@@ -45,15 +45,15 @@ class DiffContextParser:
     def should_skip_line(line):
         # "index oldsha..newsha permissions" line or..
         # "index 0000000..78ce7f6"
-        if re.search(r'index \w+..\w+( \d)?', line):
+        if re.search(r"index \w+..\w+( \d)?", line):
             return True
         # --- a/.gitignore
         # +++ b/.gitignore
         # --- /dev/null
-        elif re.search('(-|\+){3} (a|b)?/.*', line):
+        elif re.search(r"(-|\+){3} (a|b)?/.*", line):
             return True
         # "new file mode 100644" on new files
-        elif re.search('new file mode.*', line):
+        elif re.search("new file mode.*", line):
             return True
         return False
 
@@ -80,15 +80,17 @@ class DiffContextParser:
 
         for line in self.diff_text.splitlines():
             if type(line) is bytes:
-                line = line.decode('utf-8')
+                line = line.decode("utf-8")
             # New File
-            match = re.search(r'diff .*a/(?P<origin_filename>.*) '
-                              r'b/(?P<result_filename>.*)', line)
+            match = re.search(
+                r"diff .*a/(?P<origin_filename>.*) " r"b/(?P<result_filename>.*)", line
+            )
             if match is not None:
                 if z is not None:
                     result.append(z)
-                z = Entry(match.group('origin_filename'),
-                          match.group('result_filename'))
+                z = Entry(
+                    match.group("origin_filename"), match.group("result_filename")
+                )
                 position = 0
                 continue
 
@@ -97,19 +99,19 @@ class DiffContextParser:
 
             header = diff_re.search(line)
             if header is not None:
-                before_line_number = int(header.group('removed_start'))
-                after_line_number = int(header.group('added_start'))
+                before_line_number = int(header.group("removed_start"))
+                after_line_number = int(header.group("added_start"))
                 position += 1
                 continue
 
             # removed line
-            if line.startswith('-'):
+            if line.startswith("-"):
                 z.new_removed(Line(before_line_number, position, line[1:]))
                 z.new_origin(Line(before_line_number, position, line[1:]))
                 before_line_number += 1
 
             # added line
-            elif line.startswith('+'):
+            elif line.startswith("+"):
                 z.new_added(Line(after_line_number, position, line[1:]))
                 z.new_result(Line(after_line_number, position, line[1:]))
                 after_line_number += 1

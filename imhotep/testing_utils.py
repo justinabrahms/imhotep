@@ -5,10 +5,10 @@ dir = os.path.dirname(__file__)
 
 
 def fixture_path(s):
-    return os.path.join(dir, 'fixtures/', s)
+    return os.path.join(dir, "fixtures/", s)
 
 
-class JsonWrapper(object):
+class JsonWrapper:
     def __init__(self, json, status):
         self.status_code = status
         self.payload = json
@@ -17,7 +17,7 @@ class JsonWrapper(object):
         return self.payload
 
 
-class Requester(object):
+class Requester:
     def __init__(self, fixture):
         self.fixture = fixture
 
