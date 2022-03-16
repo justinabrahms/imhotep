@@ -4,6 +4,8 @@
 [![Build Status](https://travis-ci.org/justinabrahms/imhotep.svg?branch=master)](https://travis-ci.org/justinabrahms/imhotep)
 [![codecov.io](http://codecov.io/github/justinabrahms/imhotep/coverage.svg?branch=master)](http://codecov.io/github/justinabrahms/imhotep?branch=master)
 [![Requirements Status](https://requires.io/github/justinabrahms/imhotep/requirements.svg?branch=master)](https://requires.io/github/justinabrahms/imhotep/requirements/?branch=master)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 ## What is it?
 Imhotep is a tool which will comment on commits coming into your
