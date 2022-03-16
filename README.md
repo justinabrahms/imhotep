@@ -183,6 +183,10 @@ not spacing and misspelling issues.
 
 
 # Release Notes
+
+### 3.0.0
+Backwards incompatible change:
+- Dropped support for Python < 3.5 and pypy.
 ### 1.1.1
 
 Bugfixes:

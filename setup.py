@@ -1,15 +1,15 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="imhotep",
-    version="2.0.0",
+    name='imhotep',
+    version='3.0.0',
     packages=find_packages(),
-    url="https://github.com/justinabrahms/imhotep",
-    license="MIT",
-    author="Justin Abrahms",
-    author_email="justin@abrah.ms",
-    description="A tool to pipe linters into code review",
-    python_requires=">=3.0",
+    url='https://github.com/justinabrahms/imhotep',
+    license='MIT',
+    author='Justin Abrahms',
+    author_email='justin@abrah.ms',
+    description='A tool to pipe linters into code review',
+    python_requires='>=3.5',
     install_requires=[
         "requests==2.20.0",
         "six",
