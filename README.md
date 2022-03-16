@@ -47,6 +47,8 @@ include [jshint](https://github.com/justinabrahms/imhotep_jshint),
 and [jsl](https://github.com/mghayes/imhotep_jsl). You can
 install those with pip. Example: `pip install imhotep_jshint`.
 
+[Search on PyPI](https://pypi.org/search/?q=imhotep) for a full list.
+
 ## Usage
 
 To use imhotep, we must tell it which repository to look at, who to
