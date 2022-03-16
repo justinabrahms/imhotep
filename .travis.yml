@@ -3,7 +3,6 @@ python:
   - "3.5"
   - "3.6"
   - "3.9"
-  - "3.10"
 env:
   global:
   - GITHUB_USERNAME="imhotepbot"
