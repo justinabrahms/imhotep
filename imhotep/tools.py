@@ -1,4 +1,5 @@
 import logging
+import sys
 from collections import defaultdict
 
 log = logging.getLogger(__name__)
@@ -60,6 +61,8 @@ class Tool:
             self.get_command(dirname, linter_configs=linter_configs),
         )
         result = self.executor(cmd)
+        if type(result) is bytes:
+            result = result.decode(sys.getdefaultencoding())
         for line in result.split("\n"):
             output = self.process_line(dirname, line)
             if output is not None:
