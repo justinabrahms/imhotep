@@ -79,7 +79,7 @@ class RepoManager:
         dirname, repo = self.set_up_clone(repo_name, remote_repo)
         if os.path.isdir("%s/.git" % dirname):
             log.debug("Updating %s to %s", repo.download_location, dirname)
-            self.executor("cd %s && git checkout master" % dirname)
+            self.executor("cd %s && git switch master" % dirname)
             self.pull(dirname)
         else:
             log.debug("Cloning %s to %s", repo.download_location, dirname)

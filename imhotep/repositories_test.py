@@ -32,11 +32,11 @@ def test_diff_commit__compare_point_applied():
     executor = mock.Mock()
     uar = Repository(repo_name, "/loc/", [None], executor)
     uar.diff_commit("commit-to-diff", compare_point="base")
-    executor.assert_any_call("cd /loc/ && git checkout base")
+    executor.assert_any_call("cd /loc/ && git switch --detach base")
 
 
 def test_apply_commit():
     executor = mock.Mock()
     uar = Repository(repo_name, "/loc/", [None], executor)
     uar.apply_commit("base")
-    executor.assert_called_with("cd /loc/ && git checkout base")
+    executor.assert_called_with("cd /loc/ && git switch --detach base")

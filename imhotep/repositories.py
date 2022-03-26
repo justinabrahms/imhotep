@@ -31,7 +31,7 @@ class Repository:
         """
         Updates the repository to a given commit.
         """
-        self.executor(f"cd {self.dirname} && git checkout {commit}")
+        self.executor(f"cd {self.dirname} && git switch --detach {commit}")
 
     def diff_commit(self, commit, compare_point=None):
         """
