@@ -25,7 +25,6 @@ class GitHubReporter(Reporter):
                 and comment["position"] == position
                 and comment["user"]["login"] == self.requester.username
             ):
-
                 return [m for m in message if m not in comment["body"]]
         return message
 
@@ -49,7 +48,7 @@ class GitHubReporter(Reporter):
 
 class CommitReporter(GitHubReporter):
     def report_line(self, commit, file_name, line_number, position, message):
-        report_url = "https://{}/repos/{}/commits/{}/comments".format(
+        report_url = "https://api.{}/repos/{}/commits/{}/comments".format(
             self.domain,
             self.repo_name,
             commit,
@@ -74,7 +73,7 @@ class PRReporter(GitHubReporter):
         super().__init__(requester, domain, repo_name)
 
     def report_line(self, commit, file_name, line_number, position, message):
-        report_url = "https://{}/repos/{}/pulls/{}/comments".format(
+        report_url = "https://api.{}/repos/{}/pulls/{}/comments".format(
             self.domain,
             self.repo_name,
             self.pr_number,
@@ -103,7 +102,8 @@ class PRReporter(GitHubReporter):
         """
         Comments on an issue, not on a particular line.
         """
-        report_url = "https://api.github.com/repos/{}/issues/{}/comments".format(
+        report_url = "https://api.{}/repos/{}/issues/{}/comments".format(
+            self.domain,
             self.repo_name,
             self.pr_number,
         )
