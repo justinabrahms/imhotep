@@ -44,6 +44,7 @@ include [jshint](https://github.com/justinabrahms/imhotep_jshint),
 [pylint](https://github.com/justinabrahms/imhotep_pylint),
 [rubocop](https://github.com/scottjab/imhotep_rubocop),
 [foodcritic](https://github.com/scottjab/imhotep_foodcritic),
+[PMD](https://github.com/tslmy/imhotep_pmd),
 and [jsl](https://github.com/mghayes/imhotep_jsl). You can
 install those with pip. Example: `pip install imhotep_jshint`.
 
@@ -135,8 +136,7 @@ the [Installation](#installation) instructions above.
 
 ## Linter Support
 
-There is currently support for 2 linters: PyLint and JSHint. If it
-finds violations, it will post those violations to GitHub. New linting
+If it finds violations, it will post those violations to GitHub. New linting
 tools are encouraged!
 
 By default, imhotep runs all plugins it can find on your source
