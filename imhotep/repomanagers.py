@@ -65,7 +65,7 @@ class RepoManager:
         self, repo_name: str, remote_repo: None, dir_override: Optional[str] = None
     ) -> Tuple[str, Repository]:
         """Sets up the working directory and returns a tuple of (dirname, repo)."""
-        dirname = self.clone_dir(repo_name)
+        dirname = dir_override if dir_override else self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
         repo = klass(
