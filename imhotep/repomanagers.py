@@ -61,7 +61,7 @@ class RepoManager:
         log.debug("Adding remote %s url: %s", name, url)
         self.executor(f"cd {dirname} && git remote add {name} {url}")
 
-    def set_up_clone(self, repo_name: str, remote_repo: None) -> Tuple[str, Repository]:
+    def set_up_clone(self, repo_name: str) -> Tuple[str, Repository]:
         """Sets up the working directory and returns a tuple of (dirname, repo)."""
         dirname = self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
@@ -79,7 +79,7 @@ class RepoManager:
     def clone_repo(self, repo_name: str, remote_repo: None, ref: str) -> Repository:
         """Clones the given repo and returns the Repository object."""
         self.shallow_clone = False
-        dirname, repo = self.set_up_clone(repo_name, remote_repo)
+        dirname, repo = self.set_up_clone(repo_name)
 
         if self.executor is None:
             log.error("Executor does not exist.")
