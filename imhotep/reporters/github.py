@@ -1,6 +1,10 @@
 import logging
+from typing import Any, Dict, List, Optional, Union
 
+from requests.models import Response
 from six import string_types
+
+from imhotep.http_client import BasicAuthRequester
 
 from .reporter import Reporter
 
@@ -8,13 +12,21 @@ log = logging.getLogger(__name__)
 
 
 class GitHubReporter(Reporter):
-    def __init__(self, requester, domain, repo_name):
-        self._comments = []
+    def __init__(
+        self, requester: BasicAuthRequester, domain: str, repo_name: str
+    ) -> None:
+        self._comments: List[Dict[str, Any]] = []
         self.domain = domain
         self.repo_name = repo_name
         self.requester = requester
 
-    def clean_already_reported(self, comments, file_name, position, message):
+    def clean_already_reported(
+        self,
+        comments: List[Dict[str, Any]],
+        file_name: str,
+        position: int,
+        message: List[str],
+    ) -> List[Union[str, Any]]:
         """
         message is potentially a list of messages to post. This is later
         converted into a string.
@@ -28,7 +40,7 @@ class GitHubReporter(Reporter):
                 return [m for m in message if m not in comment["body"]]
         return message
 
-    def get_comments(self, report_url):
+    def get_comments(self, report_url: str) -> List[Dict[str, Any]]:
         if not self._comments:
             log.debug("PR Request: %s", report_url)
             result = self.requester.get(report_url)
@@ -38,7 +50,7 @@ class GitHubReporter(Reporter):
             self._comments = result.json()
         return self._comments
 
-    def convert_message_to_string(self, message):
+    def convert_message_to_string(self, message: List[str]) -> str:
         """Convert message from list to string for GitHub API."""
         final_message = ""
         for submessage in message:
@@ -68,11 +80,20 @@ class CommitReporter(GitHubReporter):
 
 
 class PRReporter(GitHubReporter):
-    def __init__(self, requester, domain, repo_name, pr_number):
+    def __init__(
+        self, requester: BasicAuthRequester, domain: str, repo_name: str, pr_number: str
+    ) -> None:
         self.pr_number = pr_number
         super().__init__(requester, domain, repo_name)
 
-    def report_line(self, commit, file_name, line_number, position, message):
+    def report_line(
+        self,
+        commit: str,
+        file_name: str,
+        line_number: int,
+        position: int,
+        message: List[str],
+    ) -> Optional[Response]:
         report_url = "https://api.{}/repos/{}/pulls/{}/comments".format(
             self.domain,
             self.repo_name,

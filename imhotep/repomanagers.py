@@ -1,7 +1,10 @@
 import logging
 import os
 from tempfile import mkdtemp
-from typing import Dict
+from typing import Callable, Dict, List, Optional, Tuple, Type
+
+from imhotep.repositories import Repository
+from imhotep.tools import Tool
 
 from .repositories import AuthenticatedRepository, Repository
 
@@ -17,13 +20,13 @@ class RepoManager:
 
     def __init__(
         self,
-        authenticated=False,
-        cache_directory=None,
-        tools=None,
-        executor=None,
-        shallow_clone=False,
-        domain=None,
-    ):
+        authenticated: bool = False,
+        cache_directory: None = None,
+        tools: Optional[List[Tool]] = None,
+        executor: Optional[Callable] = None,
+        shallow_clone: bool = False,
+        domain: Optional[str] = None,
+    ) -> None:
         self.should_cleanup = cache_directory is None
         self.authenticated = authenticated
         self.cache_directory = cache_directory
@@ -32,12 +35,12 @@ class RepoManager:
         self.shallow = shallow_clone
         self.domain = domain
 
-    def get_repo_class(self):
+    def get_repo_class(self) -> Type[Repository]:
         if self.authenticated:
             return AuthenticatedRepository
         return Repository
 
-    def clone_dir(self, repo_name):
+    def clone_dir(self, repo_name: str) -> str:
         dired_repo_name = repo_name.replace("/", "__")
         if not self.cache_directory:
             dirname = mkdtemp(suffix=dired_repo_name)
@@ -57,7 +60,7 @@ class RepoManager:
         log.debug("Adding remote %s url: %s", name, url)
         self.executor(f"cd {dirname} && git remote add {name} {url}")
 
-    def set_up_clone(self, repo_name, remote_repo):
+    def set_up_clone(self, repo_name: str, remote_repo: None) -> Tuple[str, Repository]:
         """Sets up the working directory and returns a tuple of
         (dirname, repo )"""
         dirname = self.clone_dir(repo_name)
@@ -73,10 +76,14 @@ class RepoManager:
         )
         return (dirname, repo)
 
-    def clone_repo(self, repo_name, remote_repo, ref):
+    def clone_repo(self, repo_name: str, remote_repo: None, ref: str) -> Repository:
         """Clones the given repo and returns the Repository object."""
         self.shallow_clone = False
         dirname, repo = self.set_up_clone(repo_name, remote_repo)
+
+        if self.executor is None:
+            log.error("Executor does not exist.")
+            raise RuntimeError
         if os.path.isdir("%s/.git" % dirname):
             log.debug("Updating %s to %s", repo.download_location, dirname)
             self.executor("cd %s && git switch master" % dirname)
@@ -91,10 +98,13 @@ class RepoManager:
             self.pull(dirname)
         return repo
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         if self.should_cleanup:
             for repo_dir in self.to_cleanup.values():
                 log.debug("Cleaning up %s", repo_dir)
+                if self.executor is None:
+                    log.error("Executor does not exist.")
+                    raise RuntimeError
                 self.executor("rm -rf %s" % repo_dir)
 
 

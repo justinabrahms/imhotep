@@ -1,6 +1,7 @@
 import logging
 import sys
 from collections import defaultdict
+from typing import Any, Callable, Set
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class Tool:
     linting violation.
     """
 
-    def __init__(self, command_executor, filenames=set()):
+    def __init__(self, command_executor: Callable, filenames: Set[Any] = set()) -> None:
         self.executor = command_executor
         self.filenames = filenames
 

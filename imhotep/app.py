@@ -3,48 +3,55 @@ import glob
 import logging
 import subprocess
 from collections import defaultdict
+from typing import Any, DefaultDict, Dict, List, Optional, Set, Tuple, Type
 
 import pkg_resources
 
 from imhotep import http_client
+from imhotep.diff_parser import Entry
+from imhotep.http_client import BasicAuthRequester
 from imhotep.repomanagers import RepoManager, ShallowRepoManager
+from imhotep.repositories import Repository
+from imhotep.shas import CommitInfo
 
 from .diff_parser import DiffContextParser
 from .errors import NoCommitInfo, UnknownTools
-from .reporters.github import CommitReporter, PRReporter
+from .reporters.github import CommitReporter, PRReporter, Reporter
 from .reporters.printing import PrintingReporter
 from .shas import CommitInfo, get_pr_info
 
 log = logging.getLogger(__name__)
 
 
-def run(cmd, cwd="."):
+def run(cmd: str, cwd: str = ".") -> bytes:
     log.debug("Running: %s", cmd)
     return subprocess.Popen(
         [cmd], stdout=subprocess.PIPE, shell=True, cwd=cwd
     ).communicate()[0]
 
 
-def find_config(dirname, config_filenames):
+def find_config(dirname: str, config_filenames: Set[str]) -> Set[str]:
     configs = []
     for filename in config_filenames:
         configs += glob.glob(f"{dirname}/{filename}")
     return set(configs)
 
 
-def run_analysis(repo, filenames=set(), linter_configs=set()):
-    results = defaultdict(lambda: defaultdict(list))
+def run_analysis(
+    repo: Repository, filenames: List[str] = []
+) -> DefaultDict[str, DefaultDict[str, List[str]]]:
+    results: DefaultDict = defaultdict(lambda: defaultdict(list))
     for tool in repo.tools:
         log.debug("running %s" % tool.__class__.__name__)
-        configs = {}
+        configs: Set[str] = set()
         try:
             configs = tool.get_configs()
         except AttributeError:
             pass
-        linter_configs = find_config(repo.dirname, configs)
-        log.debug("Tool configs %s, found configs %s", configs, linter_configs)
+        configs_found: Set[str] = find_config(repo.dirname, configs)
+        log.debug("Tool configs %s, found configs %s", configs, configs_found)
         run_results = tool.invoke(
-            repo.dirname, filenames=filenames, linter_configs=linter_configs
+            repo.dirname, filenames=filenames, linter_configs=configs_found
         )
 
         for fname, fresults in run_results.items():
@@ -54,7 +61,7 @@ def run_analysis(repo, filenames=set(), linter_configs=set()):
     return results
 
 
-def load_plugins():
+def load_plugins() -> List:
     tools = []
     for ep in pkg_resources.iter_entry_points(group="imhotep_linters"):
         klass = ep.load()
@@ -65,21 +72,21 @@ def load_plugins():
 class Imhotep:
     def __init__(
         self,
-        requester=None,
-        repo_manager=None,
-        repo_name=None,
-        pr_number=None,
-        commit_info=None,
-        commit=None,
-        origin_commit=None,
-        no_post=None,
-        debug=None,
-        filenames=None,
-        shallow_clone=False,
-        github_domain=None,
-        report_file_violations=False,
+        requester: Optional[BasicAuthRequester] = None,
+        repo_manager: Optional[RepoManager] = None,
+        repo_name: Optional[str] = None,
+        pr_number: Optional[str] = None,
+        commit_info: Optional[CommitInfo] = None,
+        commit: None = None,
+        origin_commit: Optional[str] = None,
+        no_post: Optional[bool] = None,
+        debug: Optional[bool] = None,
+        filenames: Optional[List[str]] = None,
+        shallow_clone: bool = False,
+        github_domain: Optional[str] = None,
+        report_file_violations: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         # TODO(justinabrahms): kwargs exist until we handle cli params better
         # TODO(justinabrahms): This is a sprawling API. Tighten it up.
         self.requester = requester
@@ -94,7 +101,7 @@ class Imhotep:
         self.debug = debug
         if filenames is None:
             filenames = []
-        self.requested_filenames = set(filenames)
+        self.requested_filenames: set[str] = set(filenames)
         self.shallow = shallow_clone
         self.github_domain = github_domain
         self.report_file_violations = report_file_violations
@@ -102,26 +109,58 @@ class Imhotep:
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
 
-    def get_reporter(self):
+    def get_reporter(self) -> Reporter:
         if self.no_post:
             return PrintingReporter()
         if self.pr_number:
+            if self.requester is None:
+                log.error(
+                    "PR number specified, but requester is missing. Default to printing reporter."
+                )
+                return PrintingReporter()
+            if self.github_domain is None:
+                log.error(
+                    "PR number specified, but github_domain is missing. Default to printing reporter."
+                )
+                return PrintingReporter()
+            if self.repo_name is None:
+                log.error(
+                    "PR number specified, but repo_name is missing. Default to printing reporter."
+                )
+                return PrintingReporter()
             return PRReporter(
                 self.requester, self.github_domain, self.repo_name, self.pr_number
             )
         elif self.commit is not None:
             return CommitReporter(self.requester, self.github_domain, self.repo_name)
+        log.warn("Default to printing reporter.")
+        return PrintingReporter()
 
-    def get_filenames(self, entries, requested_set=None):
+    def get_filenames(
+        self, entries: List[Entry], requested_set: Optional[Set[Any]] = None
+    ) -> List[str]:
         filenames = {x.result_filename for x in entries}
         if requested_set is not None and len(requested_set):
             filenames = requested_set.intersection(filenames)
         return list(filenames)
 
-    def invoke(self, reporter=None, max_errors=float("inf")):
+    def invoke(
+        self, reporter: Optional[Reporter] = None, max_errors: float = float("inf")
+    ) -> None:
         cinfo = self.commit_info
         if not reporter:
             reporter = self.get_reporter()
+
+        if self.manager is None:
+            log.error("Repo manager is missing.")
+            return
+
+        if self.repo_name is None:
+            log.error("Repo name is missing.")
+            return
+        if cinfo is None:
+            log.error("Commit info is missing.")
+            return
 
         try:
             repo = self.manager.clone_repo(
@@ -137,10 +176,12 @@ class Imhotep:
 
             error_count = 0
             for entry in parse_results:
-                added_lines = [l.number for l in entry.added_lines]
+                added_lines: List[int] = [l.number for l in entry.added_lines]
                 if not entry.added_lines:
                     continue
-                pos_map = {0: min(l.position for l in entry.added_lines)}
+                pos_map: Dict[int, int] = {
+                    0: min(l.position for l in entry.added_lines)
+                }
                 for x in entry.added_lines:
                     pos_map[x.number] = x.position
 
@@ -148,11 +189,13 @@ class Imhotep:
                     # "magic" value of line 0 represents file-level results.
                     added_lines.append(0)
 
-                violations = results.get(entry.result_filename, {})
-                violating_lines = [int(l) for l in violations.keys()]
+                violations: Dict[str, List[str]] = results.get(
+                    entry.result_filename, {}
+                )
+                violating_lines: List[int] = [int(l) for l in violations.keys()]
 
                 matching_numbers = set(added_lines).intersection(violating_lines)
-                for x in matching_numbers:
+                for i in matching_numbers:
                     error_count += 1
                     if error_count > max_errors:
                         continue
@@ -160,12 +203,11 @@ class Imhotep:
                         cinfo.origin,
                         entry.result_filename,
                         x,
-                        pos_map[x],
-                        violations["%s" % x],
+                        pos_map[i],
+                        violations[f"{i}"],
                     )
-
                 if error_count > max_errors and hasattr(reporter, "post_comment"):
-                    reporter.post_comment(
+                    reporter.post_comment(  # type: ignore
                         "There were too many ({error_count}) linting errors to"
                         " continue.".format(error_count=error_count)
                     )
@@ -174,7 +216,7 @@ class Imhotep:
             self.manager.cleanup()
 
 
-def gen_imhotep(**kwargs):
+def gen_imhotep(**kwargs) -> Imhotep:
     # TODO(justinabrahms): Interface should have a "are creds valid?" method
     req = http_client.BasicAuthRequester(
         kwargs["github_username"], kwargs["github_password"]
@@ -183,11 +225,12 @@ def gen_imhotep(**kwargs):
     plugins = load_plugins()
     tools = get_tools(kwargs["linter"], plugins)
 
+    Manager: Optional[Type[RepoManager]] = None
     if kwargs["shallow"]:
         Manager = ShallowRepoManager
     else:
         Manager = RepoManager
-
+    assert Manager is not None
     domain = kwargs["github_domain"]
     manager = Manager(
         authenticated=kwargs["authenticated"],
@@ -217,7 +260,7 @@ def gen_imhotep(**kwargs):
     )
 
 
-def get_tools(whitelist, known_plugins):
+def get_tools(whitelist: List[str], known_plugins: List) -> List:
     """
     Filter all known plugins by a whitelist specified. If the whitelist is
     empty, default to all plugins.
@@ -235,7 +278,7 @@ def get_tools(whitelist, known_plugins):
     return tools
 
 
-def parse_args(args):
+def parse_args(args: List[str]) -> argparse.Namespace:
     arg_parser = argparse.ArgumentParser(
         description="Posts static analysis results to github."
     )
