@@ -3,7 +3,7 @@ from collections import namedtuple
 from unittest import mock
 
 from imhotep.main import load_config
-from imhotep.testing_utils import fixture_path
+from imhotep.testing_utils import Requester, fixture_path
 
 from .app import (
     Imhotep,
@@ -110,7 +110,13 @@ def test_reporter__printing():
 
 
 def test_reporter__pr():
-    i = Imhotep(pr_number=1)
+    i = Imhotep(
+        pr_number=1,
+        repo_manager=RepoManager(),
+        repo_name="repo_name",
+        requester=mock.Mock(),
+        github_domain="github.com",
+    )
     assert type(i.get_reporter()) == PRReporter
 
 
@@ -281,10 +287,14 @@ def test_invoke__reports_errors():
     }
     manager.clone_repo.return_value.diff_commit.return_value = two_block
     manager.clone_repo.return_value.tools = [tool]
+
     imhotep = Imhotep(
         pr_number=1,
         repo_manager=manager,
         commit_info=mock.Mock(),
+        repo_name="repo_name",
+        requester=mock.Mock(),
+        github_domain="github.com",
     )
     imhotep.invoke(reporter=reporter)
 
@@ -308,6 +318,7 @@ def test_invoke__skips_empty_files():
         pr_number=1,
         repo_manager=manager,
         commit_info=mock.Mock(),
+        repo_name="repo_name",
     )
     imhotep.invoke(reporter=reporter)
 
@@ -340,6 +351,7 @@ def test_invoke__triggers_max_errors():
         pr_number=1,
         repo_manager=manager,
         commit_info=mock.Mock(),
+        repo_name="repo_name",
     )
     imhotep.invoke(reporter=reporter, max_errors=2)
 
@@ -364,6 +376,7 @@ def test_invoke__reports_file_errors():
         repo_manager=manager,
         commit_info=mock.Mock(),
         report_file_violations=True,
+        repo_name="repo_name",
     )
     imhotep.invoke(reporter=reporter)
 
@@ -377,6 +390,7 @@ def test_invoke__reports_file_errors():
         pr_number=1,
         repo_manager=manager,
         commit_info=mock.Mock(),
+        repo_name="repo_name",
         # report_file_violations is False by default
     )
     imhotep.invoke(reporter=reporter)
