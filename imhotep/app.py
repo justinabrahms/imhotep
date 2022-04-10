@@ -169,7 +169,6 @@ class Imhotep:
                 self.repo_name,
                 remote_repo=cinfo.remote_repo,
                 ref=cinfo.ref,
-                dir_override=self.dir_override,
             )
             diff = repo.diff_commit(cinfo.commit, compare_point=cinfo.origin)
 
@@ -243,6 +242,7 @@ def gen_imhotep(**kwargs) -> Imhotep:
         tools=tools,
         executor=run,
         domain=domain,
+        dir_override=kwargs.get("dir_override"),
     )
 
     if kwargs["pr_number"]:

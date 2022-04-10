@@ -26,10 +26,12 @@ class RepoManager:
         executor: Optional[Callable] = None,
         shallow_clone: bool = False,
         domain: Optional[str] = None,
+        dir_override: Optional[str] = None,
     ) -> None:
-        self.should_cleanup = cache_directory is None
+        self.should_cleanup = cache_directory is None and dir_override is None
         self.authenticated = authenticated
         self.cache_directory = cache_directory
+        self.dir_override = dir_override
         self.tools = tools or []
         self.executor = executor
         self.shallow = shallow_clone
@@ -62,10 +64,12 @@ class RepoManager:
         self.executor(f"cd {dirname} && git remote add {name} {url}")
 
     def set_up_clone(
-        self, repo_name: str, remote_repo: None, dir_override: Optional[str] = None
+        self,
+        repo_name: str,
+        remote_repo: None,
     ) -> Tuple[str, Repository]:
         """Sets up the working directory and returns a tuple of (dirname, repo)."""
-        dirname = dir_override if dir_override else self.clone_dir(repo_name)
+        dirname = self.dir_override if self.dir_override else self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
         repo = klass(
@@ -79,12 +83,16 @@ class RepoManager:
         return (dirname, repo)
 
     def clone_repo(
-        self, repo_name: str, remote_repo, ref: str, dir_override: Optional[str] = None
+        self,
+        repo_name: str,
+        remote_repo,
+        ref: str,
     ) -> Repository:
         """Clones the given repo and returns the Repository object."""
         self.shallow_clone = False
         dirname, repo = self.set_up_clone(
-            repo_name, remote_repo, dir_override=dir_override
+            repo_name,
+            remote_repo,
         )
 
         if self.executor is None:
@@ -118,13 +126,9 @@ class ShallowRepoManager(RepoManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def clone_repo(
-        self, repo_name, remote_repo, ref, dir_override: Optional[str] = None
-    ):
+    def clone_repo(self, repo_name, remote_repo, ref):
         self.shallow_clone = True
-        dirname, repo = self.set_up_clone(
-            repo_name, remote_repo, dir_override=dir_override
-        )
+        dirname, repo = self.set_up_clone(repo_name, remote_repo)
         remote_name = "origin"
         log.debug("Shallow cloning.")
         download_location = repo.download_location

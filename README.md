@@ -83,19 +83,12 @@ access token and use that for the `--github-password` above.
 
 ### Full Usage Info
 ```
-usage: imhotep [-h] [--config-file CONFIG_FILE] --repo_name REPO_NAME
-               [--commit COMMIT] [--origin-commit ORIGIN_COMMIT]
-               [--filenames FILENAMES [FILENAMES ...]] [--debug]
-               [--github-username GITHUB_USERNAME]
-               [--github-password GITHUB_PASSWORD] [--no-post]
-               [--authenticated] [--pr-number PR_NUMBER]
-               [--cache-directory CACHE_DIRECTORY]
-               [--linter LINTER [LINTER ...]] [--shallow]
-               [--github-domain GITHUB_DOMAIN] [--report-file-violations]
+usage: imhotep [-h] [--config-file CONFIG_FILE] --repo_name REPO_NAME [--commit COMMIT] [--origin-commit ORIGIN_COMMIT] [--filenames FILENAMES [FILENAMES ...]] [--debug] [--github-username GITHUB_USERNAME] [--github-password GITHUB_PASSWORD] [--no-post] [--authenticated] [--pr-number PR_NUMBER] [--cache-directory CACHE_DIRECTORY] [--linter LINTER [LINTER ...]] [--shallow]
+               [--github-domain GITHUB_DOMAIN] [--report-file-violations] [--dir-override DIR_OVERRIDE]
 
 Posts static analysis results to github.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --config-file CONFIG_FILE
                         Configuration file in json.
@@ -106,14 +99,12 @@ optional arguments:
                         Commit to use as the comparison point.
   --filenames FILENAMES [FILENAMES ...]
                         filenames you want static analysis to be limited to.
-  --debug               Will dump debugging output and won't clean up after
-                        itself.
+  --debug               Will dump debugging output and won't clean up after itself.
   --github-username GITHUB_USERNAME
                         Github user to post comments as.
   --github-password GITHUB_PASSWORD
                         Github password for the above user.
-  --no-post             [DEBUG] will print out comments rather than posting to
-                        github.
+  --no-post             [DEBUG] will print out comments rather than posting to github.
   --authenticated       Indicates the repository requires authentication
   --pr-number PR_NUMBER
                         Number of the pull request to comment on
@@ -123,11 +114,11 @@ optional arguments:
                         Path to linters to run, e.g. 'imhotep.tools:PyLint'
   --shallow             Performs a shallow clone of the repo
   --github-domain GITHUB_DOMAIN
-                        You can provide an alternative domain, if you're using
-                        github enterprise, for instance
+                        You can provide an alternative domain, if you're using github enterprise, for instance
   --report-file-violations
-                        Report file-level violations, i.e. those not on
-                        individual lines
+                        Report file-level violations, i.e. those not on individual lines
+  --dir-override DIR_OVERRIDE
+                        Override the full path to the local repository.
 ```
 
 Note: if you get a error where the plugin cannot find `imhotep.tools`, make
