@@ -41,6 +41,7 @@ class RepoManager:
         return Repository
 
     def clone_dir(self, repo_name: str) -> str:
+        """Gets a full path of the target directory to clone into."""
         dired_repo_name = repo_name.replace("/", "__")
         if not self.cache_directory:
             dirname = mkdtemp(suffix=dired_repo_name)
@@ -61,8 +62,7 @@ class RepoManager:
         self.executor(f"cd {dirname} && git remote add {name} {url}")
 
     def set_up_clone(self, repo_name: str, remote_repo: None) -> Tuple[str, Repository]:
-        """Sets up the working directory and returns a tuple of
-        (dirname, repo )"""
+        """Sets up the working directory and returns a tuple of (dirname, repo)."""
         dirname = self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
         klass = self.get_repo_class()
