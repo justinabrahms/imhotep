@@ -61,7 +61,9 @@ class RepoManager:
         log.debug("Adding remote %s url: %s", name, url)
         self.executor(f"cd {dirname} && git remote add {name} {url}")
 
-    def set_up_clone(self, repo_name: str, remote_repo: None) -> Tuple[str, Repository]:
+    def set_up_clone(
+        self, repo_name: str, remote_repo: None, dir_override: Optional[str] = None
+    ) -> Tuple[str, Repository]:
         """Sets up the working directory and returns a tuple of (dirname, repo)."""
         dirname = self.clone_dir(repo_name)
         self.to_cleanup[repo_name] = dirname
@@ -76,10 +78,14 @@ class RepoManager:
         )
         return (dirname, repo)
 
-    def clone_repo(self, repo_name: str, remote_repo: None, ref: str) -> Repository:
+    def clone_repo(
+        self, repo_name: str, remote_repo, ref: str, dir_override: Optional[str] = None
+    ) -> Repository:
         """Clones the given repo and returns the Repository object."""
         self.shallow_clone = False
-        dirname, repo = self.set_up_clone(repo_name, remote_repo)
+        dirname, repo = self.set_up_clone(
+            repo_name, remote_repo, dir_override=dir_override
+        )
 
         if self.executor is None:
             log.error("Executor does not exist.")
@@ -112,13 +118,20 @@ class ShallowRepoManager(RepoManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def clone_repo(self, repo_name, remote_repo, ref):
+    def clone_repo(
+        self, repo_name, remote_repo, ref, dir_override: Optional[str] = None
+    ):
         self.shallow_clone = True
-        dirname, repo = self.set_up_clone(repo_name, remote_repo)
+        dirname, repo = self.set_up_clone(
+            repo_name, remote_repo, dir_override=dir_override
+        )
         remote_name = "origin"
         log.debug("Shallow cloning.")
         download_location = repo.download_location
         log.debug("Creating stub git repo at %s" % (dirname))
+        if self.executor is None:
+            log.error("Executor does not exist.")
+            raise RuntimeError
         self.executor(f"mkdir -p {dirname}")
         self.executor(f"cd {dirname} && git init")
         log.debug("Adding origin repo %s " % (download_location))

@@ -85,6 +85,7 @@ class Imhotep:
         shallow_clone: bool = False,
         github_domain: Optional[str] = None,
         report_file_violations: bool = False,
+        dir_override: Optional[str] = None,
         **kwargs,
     ) -> None:
         # TODO(justinabrahms): kwargs exist until we handle cli params better
@@ -105,6 +106,7 @@ class Imhotep:
         self.shallow = shallow_clone
         self.github_domain = github_domain
         self.report_file_violations = report_file_violations
+        self.dir_override = dir_override
 
         if self.commit is None and self.pr_number is None:
             raise NoCommitInfo()
@@ -164,7 +166,10 @@ class Imhotep:
 
         try:
             repo = self.manager.clone_repo(
-                self.repo_name, remote_repo=cinfo.remote_repo, ref=cinfo.ref
+                self.repo_name,
+                remote_repo=cinfo.remote_repo,
+                ref=cinfo.ref,
+                dir_override=self.dir_override,
             )
             diff = repo.diff_commit(cinfo.commit, compare_point=cinfo.origin)
 
@@ -355,6 +360,10 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         "--report-file-violations",
         help="Report file-level violations, i.e. those not on individual lines",
         action="store_true",
+    )
+    arg_parser.add_argument(
+        "--dir-override",
+        help="Override the full path to the local repository.",
     )
     # parse out repo name
     return arg_parser.parse_args(args)
