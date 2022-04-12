@@ -61,6 +61,9 @@ class RepoManager:
 
     def add_remote(self, dirname, name, url):
         log.debug("Adding remote %s url: %s", name, url)
+
+        if url.startswith("https://") and self.authenticated:
+            url = "git@" + url.removeprefix("https://")
         self.executor(f"cd {dirname} && git remote add {name} {url}")
 
     def set_up_clone(
