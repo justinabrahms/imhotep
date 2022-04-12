@@ -11,6 +11,12 @@ def test_auth():
     assert auth.password == "pass"
 
 
+def test_empty_auth():
+    ghr = BasicAuthRequester("", "")
+    auth = ghr.get_auth()
+    assert auth is None
+
+
 def test_get():
     ghr = BasicAuthRequester("user", "pass")
     with mock.patch("requests.get") as g:
