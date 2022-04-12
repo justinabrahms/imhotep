@@ -122,6 +122,17 @@ def test_adds_remote_if_pr_is_remote():
     assert len(calls_matching_re(m, finder)) == 1, "Remote not added"
 
 
+def test_adds_remote_if_pr_is_remote_and_is_authenticated():
+    finder = re.compile(r"git remote add name git@github.com:a/b.git")
+    m = mock.Mock()
+    r = RepoManager(
+        cache_directory="/fooz", executor=m, tools=[None], authenticated=True
+    )
+    r.clone_repo(repo_name, Remote("name", "https://github.com/a/b.git"), None)
+
+    assert len(calls_matching_re(m, finder)) == 1, "Remote not added"
+
+
 def test_pulls_remote_changes_if_remote():
     finder = re.compile(r"git pull --all")
     m = mock.Mock()
