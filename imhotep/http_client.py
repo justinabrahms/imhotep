@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict
+from typing import Dict, Optional
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -22,8 +22,10 @@ class BasicAuthRequester:
         self.username = username
         self.password = password
 
-    def get_auth(self) -> HTTPBasicAuth:
-        return HTTPBasicAuth(self.username, self.password)
+    def get_auth(self) -> Optional[HTTPBasicAuth]:
+        if self.username and self.password:
+            return HTTPBasicAuth(self.username, self.password)
+        return None
 
     def get(self, url: str) -> Response:
         log.debug("Fetching %s", url)
