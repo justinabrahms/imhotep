@@ -60,8 +60,12 @@ class GitHubReporter(Reporter):
 
 class CommitReporter(GitHubReporter):
     def report_line(self, commit, file_name, line_number, position, message):
-        report_url = "https://api.{}/repos/{}/commits/{}/comments".format(
-            self.domain,
+        if self.domain == "github.com":
+            api_url = "api.%s" % self.domain
+        else:
+            api_url = "%s/api/v3" % self.domain
+        report_url = "https://{}/repos/{}/commits/{}/comments".format(
+            api_url,
             self.repo_name,
             commit,
         )
@@ -94,8 +98,12 @@ class PRReporter(GitHubReporter):
         position: int,
         message: List[str],
     ) -> Optional[Response]:
+        if self.domain == "github.com":
+            api_url = "api.%s" % self.domain
+        else:
+            api_url = "%s/api/v3" % self.domain
         report_url = "https://api.{}/repos/{}/pulls/{}/comments".format(
-            self.domain,
+            api_url,
             self.repo_name,
             self.pr_number,
         )
@@ -123,8 +131,12 @@ class PRReporter(GitHubReporter):
         """
         Comments on an issue, not on a particular line.
         """
+        if self.domain == "github.com":
+            api_url = "api.%s" % self.domain
+        else:
+            api_url = "%s/api/v3" % self.domain
         report_url = "https://api.{}/repos/{}/issues/{}/comments".format(
-            self.domain,
+            api_url,
             self.repo_name,
             self.pr_number,
         )
