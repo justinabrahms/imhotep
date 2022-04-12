@@ -102,7 +102,7 @@ class PRReporter(GitHubReporter):
             api_url = "api.%s" % self.domain
         else:
             api_url = "%s/api/v3" % self.domain
-        report_url = "https://api.{}/repos/{}/pulls/{}/comments".format(
+        report_url = "https://{}/repos/{}/pulls/{}/comments".format(
             api_url,
             self.repo_name,
             self.pr_number,
@@ -135,7 +135,7 @@ class PRReporter(GitHubReporter):
             api_url = "api.%s" % self.domain
         else:
             api_url = "%s/api/v3" % self.domain
-        report_url = "https://api.{}/repos/{}/issues/{}/comments".format(
+        report_url = "https://{}/repos/{}/issues/{}/comments".format(
             api_url,
             self.repo_name,
             self.pr_number,
