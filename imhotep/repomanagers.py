@@ -64,6 +64,7 @@ class RepoManager:
 
         if url.startswith("https://") and self.authenticated:
             url = "git@" + url.removeprefix("https://")
+            url = url.replace("/", ":", 1)
         self.executor(f"cd {dirname} && git remote add {name} {url}")
 
     def set_up_clone(
