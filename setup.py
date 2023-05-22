@@ -11,7 +11,7 @@ setup(
     description="A tool to pipe linters into code review",
     python_requires=">=3.9",
     install_requires=[
-        "requests==2.20.0",
+        "requests==2.31.0",
         "six",
     ],
     extras_require={"pylint": "PyLint"},
