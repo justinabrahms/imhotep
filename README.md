@@ -12,6 +12,8 @@ Imhotep is a tool which will comment on commits coming into your
 repository and check for syntactic errors and general lint
 warnings.
 
+**NOTE**: This repository has been archived, as it's been superceeded by GitHub's [check annotations](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks#checks) feature.
+
 ## Installation
 
 Currently, installation is done from source through Python packaging
